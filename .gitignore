@@ -1,0 +1,5 @@
+release/
+*.txt
+*.log
+*.tmp
+*.bak
