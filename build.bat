@@ -1,22 +1,32 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-title MPLAB SOURCE EXPORT TOOL v3.0
+::=======================================================================
+:: MPLAB SOURCE EXPORT TOOL
+:: Build Entry
+::=======================================================================
 
-echo.
-echo ===============================================
-echo        MPLAB SOURCE EXPORT TOOL v3.0
-echo ===============================================
-echo.
+title MPLAB SOURCE EXPORT TOOL
 
-call modules\01_Core.inc
+::=======================================================================
+:: Verify Framework
+::=======================================================================
 
-call modules\02_Scan.inc
+if not exist "%~dp0modules\99_Main.bat" (
+    echo.
+    echo ERROR:
+    echo     modules\99_Main.bat not found.
+    echo.
+    endlocal
+    exit /b 1
+)
 
-echo.
-echo ===============================================
-echo              PROGRAM FINISHED
-echo ===============================================
-echo.
+::=======================================================================
+:: Start Application
+::=======================================================================
 
-pause
+call "%~dp0modules\99_Main.bat"
+
+set "EXIT_CODE=%ERRORLEVEL%"
+
+endlocal & exit /b %EXIT_CODE%

@@ -1,352 +1,644 @@
+: Part 1
+
 @echo off
-setlocal EnableExtensions EnableDelayedExpansion
-::#####################################################################
+
+::#######################################################################
 ::
-::  Module      : 01_Core.inc
-::  Project     : MPLAB SOURCE EXPORT TOOL
-::  Version     : 3.0
+::  MPLAB SOURCE EXPORT TOOL
+::
+::-----------------------------------------------------------------------
+::  Module      : 01_Core.bat
+::  Purpose     : Core Framework Library
+::  Version     : 5.1
 ::  Author      : Tan Doan
 ::
-::  Description
-::      - Banner
-::      - Config
-::      - Global Variables
-::      - Common Functions
-::      - Detect Project
-::      - Format Functions
+::-----------------------------------------------------------------------
+::  Responsibilities
 ::
-::#####################################################################
+::      • Global Configuration
+::      • Framework API Dispatcher
+::      • Core Runtime Services
+::      • Console Utilities
+::      • Project Utilities
+::
+::#######################################################################
 
 
-::=====================================================================
-:: CONFIG
-::=====================================================================
+::=======================================================================
+:: MODULE INITIALIZATION
+::=======================================================================
 
-set "VERSION=3.0"
-
-set "OUTPUT=All_Selected_Source.txt"
-
-set "SCAN_EXT=*.c *.h"
-
-:: Ignore Folder
-
-set "IGNORE1=\build\"
-set "IGNORE2=\dist\"
-set "IGNORE3=\Debug\"
-set "IGNORE4=\Release\"
-set "IGNORE5=\nbproject\"
-set "IGNORE6=\objects\"
+if not defined CORE_MODULE_LOADED (
+    set "CORE_MODULE_LOADED=1"
+)
 
 
-::=====================================================================
-:: GLOBAL VARIABLES
-::=====================================================================
+::=======================================================================
+:: APPLICATION CONFIGURATION
+::=======================================================================
 
-set FILE_COUNT=0
-set EXPORT_COUNT=0
+set "APP_NAME=MPLAB SOURCE EXPORT TOOL"
+set "APP_VERSION=5.1"
+set "APP_AUTHOR=Tan Doan"
 
-set TOTAL_LINES=0
-set TOTAL_SIZE=0
-set TOTAL_CHARS=0
-set TOTAL_COMMENT=0
+set "APP_LICENSE=MIT"
+set "APP_BUILD=2026.07.05"
 
-set START_TIME=
-set END_TIME=
+set "APP_COPYRIGHT=(C) 2026 Tan Doan"
 
-set PROJECT=
-set PROJECT_PATH=%CD%
-
-set BAR_WIDTH=40
-
-set TEMP_FILE=%TEMP%\mplab_export.tmp
+set "APP_OUTPUT=All_Selected_Source.txt"
 
 
+::=======================================================================
+:: SCAN CONFIGURATION
+::=======================================================================
 
-::=====================================================================
-:: INITIALIZE
-::=====================================================================
+set "SCAN_PATTERN=*.c *.h"
 
-call :Initialize
+set /A IGNORE_COUNT=6
 
-goto :eof
-
-
-
-::#####################################################################
-:: FUNCTIONS
-::#####################################################################
+set "IGNORE_DIR_1=\build\"
+set "IGNORE_DIR_2=\dist\"
+set "IGNORE_DIR_3=\Debug\"
+set "IGNORE_DIR_4=\Release\"
+set "IGNORE_DIR_5=\nbproject\"
+set "IGNORE_DIR_6=\objects\"
 
 
+::=======================================================================
+:: USER INTERFACE CONFIGURATION
+::=======================================================================
 
-::=====================================================================
-:: Initialize
-::=====================================================================
+set /A BAR_WIDTH=60
 
-:Initialize
+set "LINE==============================================================="
+
+::=======================================================================
+:: RETURN CODES
+::=======================================================================
+
+::--------------------------------------------------
+:: General
+::--------------------------------------------------
+
+set "RC_SUCCESS=0"
+set "RC_ERROR=1"
+
+::--------------------------------------------------
+:: API
+::--------------------------------------------------
+
+set "RC_INVALID_PARAMETER=2"
+
+::--------------------------------------------------
+:: File System
+::--------------------------------------------------
+
+set "RC_FILE_NOT_FOUND=3"
+set "RC_PROJECT_NOT_FOUND=4"
+set "RC_EXPORT_FAILED=5"
+
+::--------------------------------------------------
+:: Runtime
+::--------------------------------------------------
+
+set "RC_SCAN_FAILED=10"
+set "RC_MENU_ABORT=11"
+set "RC_USER_CANCEL=12"
+
+::=======================================================================
+:: API DISPATCHER
+::
+:: Usage
+::     call "01_Core.bat" Core.Initialize
+::     call "01_Core.bat" Core.PrintBanner
+::     call "01_Core.bat" Core.Info
+::
+:: Console
+::=======================================================================
+
+if "%~1"=="" (
+    exit /b %RC_SUCCESS%
+)
+
+if /I "%~1"=="Core.Initialize"       goto Core_Initialize
+if /I "%~1"=="Core.Exit"             goto Core_Exit
+
+if /I "%~1"=="Core.ResetStatistics"  goto Core_ResetStatistics
+
+if /I "%~1"=="Core.PrintBanner"      goto Core_PrintBanner
+if /I "%~1"=="Core.PrintLine"        goto Core_PrintLine
+if /I "%~1"=="Core.PrintCenter"      goto Core_PrintCenter
+
+if /I "%~1"=="Core.Info"             goto Core_Info
+if /I "%~1"=="Core.Warning"          goto Core_Warning
+if /I "%~1"=="Core.Error"            goto Core_Error
+if /I "%~1"=="Core.Success"          goto Core_Success
+if /I "%~1"=="Core.Normal"           goto Core_Normal
+
+if /I "%~1"=="Core.Pause"            goto Core_Pause
+
+if /I "%~1"=="Core.DetectProject"    goto Core_DetectProject
+if /I "%~1"=="Core.RelativePath"     goto Core_RelativePath
+if /I "%~1"=="Core.FormatSize"       goto Core_FormatSize
+if /I "%~1"=="Core.GetCurrentTime"   goto Core_GetCurrentTime
+
+call "%~f0" Core.Error
+
+call "%~f0" Core.PrintLine
+
+echo.
+echo Unknown Core API:
+echo     %~1
+echo.
+echo.
+echo Usage:
+echo     call "01_Core.bat" Core.Initialize
+
+call "%~f0" Core.PrintLine
+
+call "%~f0" Core.Normal
+
+exit /b %RC_INVALID_PARAMETER%
+
+: Part 2
+
+::=======================================================================
+:: CORE API
+::=======================================================================
+
+::=======================================================================
+:: Core.Initialize
+::-----------------------------------------------------------------------
+:: Purpose
+::     Initialize application runtime.
+::
+:: Responsibilities
+::     • Clear console
+::     • Reset console color
+::     • Print application banner
+::     • Initialize session variables
+::     • Reset statistics
+::=======================================================================
+
+:Core_Initialize
 
 cls
 
-call :PrintLine
+call "%~f0" Core.Normal
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~f0" Core.PrintBanner
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+
+::-----------------------------------------------------------------------
+:: Session Variables
+::-----------------------------------------------------------------------
+
+set "PROJECT_NAME="
+
+set "PROJECT_PATH=%CD%"
+
+set "OUTPUT_FILE=%APP_OUTPUT%"
+
+set "START_TIME=%TIME%"
+
+set "END_TIME="
+
+set "CURRENT_TIME="
+
+set "ELAPSED_TIME="
+
+set "TEMP_FILE=%TEMP%\mplab_export.tmp"
+
+
+::-----------------------------------------------------------------------
+:: Reset Statistics
+::-----------------------------------------------------------------------
+
+call "%~f0" Core.ResetStatistics
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+
+exit /b %RC_SUCCESS%
+
+
+
+::=======================================================================
+:: Core.ResetStatistics
+::-----------------------------------------------------------------------
+:: Purpose
+::     Reset all runtime statistics.
+::
+:: NOTE
+::     Session variables are NOT modified here.
+::=======================================================================
+
+:Core_ResetStatistics
+
+set /A TOTAL_FILES_SCANNED=0
+
+set /A TOTAL_FILES_EXPORTED=0
+
+set /A TOTAL_LINES=0
+
+set /A TOTAL_SIZE=0
+
+set /A TOTAL_CHARACTERS=0
+
+set /A TOTAL_COMMENT_LINES=0
+
+exit /b %RC_SUCCESS%
+
+
+
+::=======================================================================
+:: Core.Exit
+::-----------------------------------------------------------------------
+:: Purpose
+::     Shutdown application.
+::
+:: NOTE
+::     Statistics summary will be expanded after
+::     06_Statistics.bat is completed.
+::=======================================================================
+
+:Core_Exit
+
+set "END_TIME=%TIME%"
 
 echo.
-echo              MPLAB SOURCE EXPORT TOOL v%VERSION%
-echo.
-call :PrintLine
+
+call "%~f0" Core.PrintLine
 
 echo.
+echo                     Program Finished
+echo.
 
-echo Initializing...
+echo     Project          : %PROJECT_NAME%
+echo     Files Scanned    : %TOTAL_FILES_SCANNED%
+echo     Files Exported   : %TOTAL_FILES_EXPORTED%
+echo     Elapsed Time     : %ELAPSED_TIME%
 
 echo.
 
-set START_TIME=%TIME%
+call "%~f0" Core.PrintLine
 
-call :DetectProject
+echo.
 
-goto :eof
+call "%~f0" Core.Normal
+
+exit /b %RC_SUCCESS%
+
+:: Part 3
+
+::#######################################################################
+:: CONSOLE OUTPUT API
+::#######################################################################
+
+
+::=======================================================================
+:: Core.PrintLine
+::-----------------------------------------------------------------------
+:: Purpose
+::     Print separator line.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.PrintLine
+::=======================================================================
+
+:Core_PrintLine
+
+echo %LINE%
+
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: Detect Project
-::=====================================================================
+::=======================================================================
+:: Core.PrintCenter
+::-----------------------------------------------------------------------
+:: Purpose
+::     Print section title.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.PrintCenter "SCAN PROJECT"
+::     Print section title.
+::
+:: Notes
+::     The title is printed with a fixed left margin.
+::
+:: TODO
+::     Dynamic center alignment in future versions.
+::=======================================================================
 
-:DetectProject
+:Core_PrintCenter
 
-set PROJECT=
+if "%~2"=="" exit /b %RC_INVALID_PARAMETER%
+
+echo.
+
+call "%~f0" Core.PrintLine
+
+echo.
+
+echo                        %~2
+
+echo.
+
+call "%~f0" Core.PrintLine
+
+echo.
+
+exit /b %RC_SUCCESS%
+
+
+
+::=======================================================================
+:: Core.PrintBanner
+::-----------------------------------------------------------------------
+:: Purpose
+::     Print application banner.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.PrintBanner
+::=======================================================================
+
+:Core_PrintBanner
+
+call "%~f0" Core.PrintLine
+
+echo.
+echo                 %APP_NAME%
+echo.
+echo                 Version    : %APP_VERSION%
+echo                 Author     : %APP_AUTHOR%
+echo                 Build      : %APP_BUILD%
+echo                 License    : %APP_LICENSE%
+echo.
+echo                 %APP_COPYRIGHT%
+echo.
+
+call "%~f0" Core.PrintLine
+
+echo.
+
+exit /b %RC_SUCCESS%
+
+:: Part 4
+
+::#######################################################################
+:: PROJECT UTILITY API
+::#######################################################################
+
+
+::=======================================================================
+:: Core.DetectProject
+::-----------------------------------------------------------------------
+:: Purpose
+::     Detect current MPLAB project.
+::
+:: Output
+::     PROJECT_NAME
+::     PROJECT_PATH
+::=======================================================================
+
+:Core_DetectProject
+
+set "PROJECT_NAME="
+set "PROJECT_PATH=%CD%"
 
 for %%D in ("%CD%") do (
 
-    echo %%~nxD | findstr /I ".X" >nul
-
-    if not errorlevel 1 (
-
-        set PROJECT=%%~nxD
-
+    if /I "%%~xD"==".X" (
+    set "PROJECT_NAME=%%~nxD"
     )
 
 )
 
-if not defined PROJECT (
+if not defined PROJECT_NAME (
 
     for %%D in ("%CD%") do (
-
-        set PROJECT=%%~nxD
-
+        set "PROJECT_NAME=%%~nxD"
     )
 
 )
 
-echo Project
-
-echo     %PROJECT%
-
-echo.
-
-echo Folder
-
-echo     %PROJECT_PATH%
-
-echo.
-
-goto :eof
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: Print Line
-::=====================================================================
+::=======================================================================
+:: Core.RelativePath
+::-----------------------------------------------------------------------
+:: Purpose
+::     Convert absolute path to project relative path.
+::
+:: Input
+::     %2 = Full file path
+::
+:: Output
+::     RELATIVE_PATH
+:: NOTE
+::     Requires Delayed Expansion.
+::=======================================================================
 
-:PrintLine
+:Core_RelativePath
 
-echo ================================================================
+if "%~2"=="" exit /b %RC_INVALID_PARAMETER%
 
-goto :eof
-
-
-
-::=====================================================================
-:: Print Title
-::=====================================================================
-
-:PrintTitle
-
-echo.
-call :PrintLine
-
-echo %~1
-
-call :PrintLine
-echo.
-
-goto :eof
-
-
-
-::=====================================================================
-:: Reset Statistics
-::=====================================================================
-
-:ResetStatistics
-
-set FILE_COUNT=0
-set EXPORT_COUNT=0
-
-set TOTAL_LINES=0
-set TOTAL_SIZE=0
-set TOTAL_CHARS=0
-set TOTAL_COMMENT=0
-
-goto :eof
-
-
-
-::=====================================================================
-:: Get Relative Path
-::=====================================================================
-
-:RelativePath
-
-set "RELATIVE_PATH=%~1"
+set "RELATIVE_PATH=%~2"
 
 set "RELATIVE_PATH=!RELATIVE_PATH:%PROJECT_PATH%\=!"
 
-goto :eof
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: Format Size
-::=====================================================================
+::=======================================================================
+:: Core.FormatSize
+::-----------------------------------------------------------------------
+:: Purpose
+::     Convert file size to readable text.
+::
+:: Input
+::     %2 = Size (Bytes)
+::
+:: Output
+::     SIZE_TEXT
+::=======================================================================
 
-:FormatSize
+:Core_FormatSize
 
-set SIZE=%~1
+if "%~2"=="" exit /b %RC_INVALID_PARAMETER%
+
+set /A SIZE=%~2
 
 if %SIZE% LSS 1024 (
 
-    set SIZE_TEXT=%SIZE% B
-
-    goto :eof
+    set "SIZE_TEXT=%SIZE% Bytes"
+    exit /b %RC_SUCCESS%
 
 )
 
-set /a KB=SIZE/1024
+set /A KB=SIZE/1024
 
 if %KB% LSS 1024 (
 
-    set SIZE_TEXT=%KB% KB
-
-    goto :eof
+    set "SIZE_TEXT=%KB% KB"
+    exit /b %RC_SUCCESS%
 
 )
 
-set /a MB=KB/1024
+set /A MB=KB/1024
 
-set SIZE_TEXT=%MB% MB
+if %MB% LSS 1024 (
 
-goto :eof
+    set "SIZE_TEXT=%MB% MB"
+    exit /b %RC_SUCCESS%
 
+)
 
+set /A GB=MB/1024
 
-::=====================================================================
-:: Current Time
-::=====================================================================
+set "SIZE_TEXT=%GB% GB"
 
-:GetCurrentTime
-
-set CURRENT_TIME=%TIME%
-
-goto :eof
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: Finish Timer
-::=====================================================================
+::=======================================================================
+:: Core.GetCurrentTime
+::-----------------------------------------------------------------------
+:: Purpose
+::     Save current system time.
+::
+:: Output
+::     CURRENT_TIME
+::=======================================================================
 
-:FinishTimer
+:Core_GetCurrentTime
 
-set END_TIME=%TIME%
+set "CURRENT_TIME=%TIME%"
 
-goto :eof
+exit /b %RC_SUCCESS%
+
+:: Part 5
+
+::#######################################################################
+:: CONSOLE CONTROL API
+::#######################################################################
 
 
+::=======================================================================
+:: Core.Info
+::-----------------------------------------------------------------------
+:: Purpose
+::     Set console color to Information.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.Info
+::=======================================================================
 
-::=====================================================================
-:: INFO
-::=====================================================================
-
-:Info
+:Core_Info
 
 color 0B
 
-goto :eof
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: WARNING
-::=====================================================================
+::=======================================================================
+:: Core.Warning
+::-----------------------------------------------------------------------
+:: Purpose
+::     Set console color to Warning.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.Warning
+::=======================================================================
 
-:Warning
+:Core_Warning
 
 color 0E
 
-goto :eof
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: ERROR
-::=====================================================================
+::=======================================================================
+:: Core.Error
+::-----------------------------------------------------------------------
+:: Purpose
+::     Set console color to Error.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.Error
+::=======================================================================
 
-:Error
+:Core_Error
 
 color 0C
 
-goto :eof
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: NORMAL
-::=====================================================================
+::=======================================================================
+:: Core.Success
+::-----------------------------------------------------------------------
+:: Purpose
+::     Set console color to Success.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.Success
+::=======================================================================
 
-:Normal
+:Core_Success
+
+color 0A
+
+exit /b %RC_SUCCESS%
+
+
+
+::=======================================================================
+:: Core.Normal
+::-----------------------------------------------------------------------
+:: Purpose
+::     Restore default console color.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.Normal
+::=======================================================================
+
+:Core_Normal
 
 color 0F
 
-goto :eof
+exit /b %RC_SUCCESS%
 
 
 
-::=====================================================================
-:: Pause
-::=====================================================================
+::=======================================================================
+:: Core.Pause
+::-----------------------------------------------------------------------
+:: Purpose
+::     Pause application until user presses a key.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.Pause
+::=======================================================================
 
-:Pause
+:Core_Pause
 
 echo.
 
 pause
 
-goto :eof
+exit /b %RC_SUCCESS%
 
-
-
-::=====================================================================
-:: Exit Program
-::=====================================================================
-
-:Exit
-
-call :Normal
-
-echo.
-
-echo Program Finished.
-
-echo.
-
-exit /b
