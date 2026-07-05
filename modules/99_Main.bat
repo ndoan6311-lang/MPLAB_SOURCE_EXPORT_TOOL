@@ -65,6 +65,7 @@ call :PostRun
 if errorlevel 1 goto OnError
 
 call :Shutdown
+if errorlevel 1 goto OnError
 
 exit /b %RC_SUCCESS%
 
@@ -77,6 +78,9 @@ exit /b %RC_SUCCESS%
 :Initialize
 
 call "%~dp001_Core.bat" Core.Initialize
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp001_Core.bat" Core.PrintBanner
 if errorlevel 1 exit /b %ERRORLEVEL%
 
 call "%~dp001_Core.bat" Core.DetectProject
@@ -112,7 +116,11 @@ exit /b %RC_SUCCESS%
 
 call "%~dp003_Menu.bat" Menu.Start
 
-exit /b %ERRORLEVEL%
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+exit /b %RC_SUCCESS%
 
 
 
@@ -141,6 +149,10 @@ exit /b %RC_SUCCESS%
 
 call "%~dp001_Core.bat" Core.Exit
 
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
 exit /b %RC_SUCCESS%
 
 
@@ -151,6 +163,8 @@ exit /b %RC_SUCCESS%
 
 :OnError
 
+set "EXIT_CODE=%ERRORLEVEL%"
+
 call "%~dp001_Core.bat" Core.Error
 
 echo.
@@ -159,11 +173,11 @@ call "%~dp001_Core.bat" Core.PrintLine
 echo.
 echo APPLICATION ERROR
 echo.
-echo Exit Code : %ERRORLEVEL%
+echo Exit Code : %EXIT_CODE%
 echo.
 
 call "%~dp001_Core.bat" Core.PrintLine
 
 call "%~dp001_Core.bat" Core.Normal
 
-exit /b %ERRORLEVEL%
+exit /b %EXIT_CODE%

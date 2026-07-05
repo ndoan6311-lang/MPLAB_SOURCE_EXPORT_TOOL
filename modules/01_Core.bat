@@ -1,4 +1,4 @@
-: Part 1
+:: Part 1 01_Core.bat
 
 @echo off
 
@@ -143,6 +143,10 @@ if /I "%~1"=="Core.RelativePath"     goto Core_RelativePath
 if /I "%~1"=="Core.FormatSize"       goto Core_FormatSize
 if /I "%~1"=="Core.GetCurrentTime"   goto Core_GetCurrentTime
 
+if /I "%~1"=="Core.FileExists"       goto Core_FileExists
+if /I "%~1"=="Core.DirectoryExists"  goto Core_DirectoryExists
+if /I "%~1"=="Core.FormatDuration"   goto Core_FormatDuration
+
 call "%~f0" Core.Error
 
 call "%~f0" Core.PrintLine
@@ -161,7 +165,7 @@ call "%~f0" Core.Normal
 
 exit /b %RC_INVALID_PARAMETER%
 
-: Part 2
+:: Part 2 01_Core.bat
 
 ::=======================================================================
 :: CORE API
@@ -174,11 +178,10 @@ exit /b %RC_INVALID_PARAMETER%
 ::     Initialize application runtime.
 ::
 :: Responsibilities
-::     • Clear console
-::     • Reset console color
-::     • Print application banner
-::     • Initialize session variables
-::     • Reset statistics
+::    • Clear console
+::    • Reset console color
+::    • Initialize session variables
+::    • Reset runtime statistics
 ::=======================================================================
 
 :Core_Initialize
@@ -186,43 +189,36 @@ exit /b %RC_INVALID_PARAMETER%
 cls
 
 call "%~f0" Core.Normal
-if errorlevel 1 exit /b %ERRORLEVEL%
 
-call "%~f0" Core.PrintBanner
-if errorlevel 1 exit /b %ERRORLEVEL%
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
 
-
-::-----------------------------------------------------------------------
+::--------------------------------------------------
 :: Session Variables
-::-----------------------------------------------------------------------
+::--------------------------------------------------
 
 set "PROJECT_NAME="
-
 set "PROJECT_PATH=%CD%"
-
 set "OUTPUT_FILE=%APP_OUTPUT%"
 
 set "START_TIME=%TIME%"
-
 set "END_TIME="
 
 set "CURRENT_TIME="
-
 set "ELAPSED_TIME="
 
 set "TEMP_FILE=%TEMP%\mplab_export.tmp"
 
-
-::-----------------------------------------------------------------------
-:: Reset Statistics
-::-----------------------------------------------------------------------
+::--------------------------------------------------
+:: Reset Runtime
+::--------------------------------------------------
 
 call "%~f0" Core.ResetStatistics
 
 if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
-
 
 exit /b %RC_SUCCESS%
 
@@ -234,19 +230,19 @@ exit /b %RC_SUCCESS%
 :: Purpose
 ::     Reset all runtime statistics.
 ::
+:: Responsibilities
+::      • Reset export statistics
+::      • Reset runtime counters
+::
 :: NOTE
-::     Session variables are NOT modified here.
+::     Scan statistics are managed by 02_Scan.bat.
 ::=======================================================================
 
 :Core_ResetStatistics
 
-set /A TOTAL_FILES_SCANNED=0
-
 set /A TOTAL_FILES_EXPORTED=0
 
 set /A TOTAL_LINES=0
-
-set /A TOTAL_SIZE=0
 
 set /A TOTAL_CHARACTERS=0
 
@@ -267,7 +263,14 @@ exit /b %RC_SUCCESS%
 ::     06_Statistics.bat is completed.
 ::=======================================================================
 
+
 :Core_Exit
+
+call "%~dp002_Scan.bat" Scan.GetTotalSize
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
 
 set "END_TIME=%TIME%"
 
@@ -280,7 +283,8 @@ echo                     Program Finished
 echo.
 
 echo     Project          : %PROJECT_NAME%
-echo     Files Scanned    : %TOTAL_FILES_SCANNED%
+echo     Files Scanned    : %SCAN_FILE_COUNT%
+echo     Total Size       : %SCAN_TOTAL_SIZE_TEXT%
 echo     Files Exported   : %TOTAL_FILES_EXPORTED%
 echo     Elapsed Time     : %ELAPSED_TIME%
 
@@ -294,7 +298,7 @@ call "%~f0" Core.Normal
 
 exit /b %RC_SUCCESS%
 
-:: Part 3
+:: Part 3 01_Core.bat
 
 ::#######################################################################
 :: CONSOLE OUTPUT API
@@ -389,10 +393,10 @@ echo.
 
 exit /b %RC_SUCCESS%
 
-:: Part 4
+:: Part 4 01_Core.bat
 
 ::#######################################################################
-:: PROJECT UTILITY API
+:: UTILITY API
 ::#######################################################################
 
 
@@ -415,7 +419,7 @@ set "PROJECT_PATH=%CD%"
 for %%D in ("%CD%") do (
 
     if /I "%%~xD"==".X" (
-    set "PROJECT_NAME=%%~nxD"
+        set "PROJECT_NAME=%%~nxD"
     )
 
 )
@@ -445,6 +449,7 @@ exit /b %RC_SUCCESS%
 ::     RELATIVE_PATH
 :: NOTE
 ::     Requires Delayed Expansion.
+::     Caller must enable delayed expansion.
 ::=======================================================================
 
 :Core_RelativePath
@@ -457,7 +462,57 @@ set "RELATIVE_PATH=!RELATIVE_PATH:%PROJECT_PATH%\=!"
 
 exit /b %RC_SUCCESS%
 
+::=======================================================================
+:: Core.FileExists
+::-----------------------------------------------------------------------
+:: Purpose
+::     Verify that a file exists.
+::
+:: Input
+::     %2 = File path
+::
+:: Return
+::     RC_SUCCESS
+::     RC_FILE_NOT_FOUND
+::=======================================================================
 
+:Core_FileExists
+
+if "%~2"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+if exist "%~2" (
+    exit /b %RC_SUCCESS%
+)
+
+exit /b %RC_FILE_NOT_FOUND%
+
+::=======================================================================
+:: Core.DirectoryExists
+::-----------------------------------------------------------------------
+:: Purpose
+::     Verify that a directory exists.
+::
+:: Input
+::     %2 = Directory path
+::
+:: Return
+::     RC_SUCCESS
+::     RC_FILE_NOT_FOUND
+::=======================================================================
+
+:Core_DirectoryExists
+
+if "%~2"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+if exist "%~2\" (
+    exit /b %RC_SUCCESS%
+)
+
+exit /b %RC_FILE_NOT_FOUND%
 
 ::=======================================================================
 :: Core.FormatSize
@@ -509,7 +564,28 @@ set "SIZE_TEXT=%GB% GB"
 
 exit /b %RC_SUCCESS%
 
+::=======================================================================
+:: Core.FormatDuration
+::-----------------------------------------------------------------------
+:: Purpose
+::     Format elapsed time.
+::
+:: Input
+::     %2 = Duration text
+::
+:: Output
+::     DURATION_TEXT
+::=======================================================================
 
+:Core_FormatDuration
+
+if "%~2"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+set "DURATION_TEXT=%~2"
+
+exit /b %RC_SUCCESS%
 
 ::=======================================================================
 :: Core.GetCurrentTime
@@ -527,7 +603,7 @@ set "CURRENT_TIME=%TIME%"
 
 exit /b %RC_SUCCESS%
 
-:: Part 5
+:: Part 5 01_Core.bat
 
 ::#######################################################################
 :: CONSOLE CONTROL API

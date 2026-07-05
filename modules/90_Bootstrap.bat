@@ -36,29 +36,101 @@ set "BOOTSTRAP_MODULE_LOADED=1"
 :: LOAD FRAMEWORK MODULES
 ::=======================================================================
 
+if not exist "%~dp001_Core.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=001_Core.bat"
+    goto BootstrapError
+)
+
 call "%~dp001_Core.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=001_Core.bat"
+    goto BootstrapError
+)
+
+if not exist "%~dp002_Scan.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=002_Scan.bat"
+    goto BootstrapError
+)
 
 call "%~dp002_Scan.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=002_Scan.bat"
+    goto BootstrapError
+)
+
+if not exist "%~dp003_Menu.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=003_Menu.bat"
+    goto BootstrapError
+)
 
 call "%~dp003_Menu.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=003_Menu.bat"
+    goto BootstrapError
+)
+
+if not exist "%~dp004_Search.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=004_Search.bat"
+    goto BootstrapError
+)
 
 call "%~dp004_Search.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=004_Search.bat"
+    goto BootstrapError
+)
+
+if not exist "%~dp005_Export.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=005_Export.bat"
+    goto BootstrapError
+)
 
 call "%~dp005_Export.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=005_Export.bat"
+    goto BootstrapError
+)
+
+if not exist "%~dp006_Statistics.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=006_Statistics.bat"
+    goto BootstrapError
+)
 
 call "%~dp006_Statistics.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=006_Statistics.bat"
+    goto BootstrapError
+)
+
+if not exist "%~dp007_Progress.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=007_Progress.bat"
+    goto BootstrapError
+)
 
 call "%~dp007_Progress.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=007_Progress.bat"
+    goto BootstrapError
+)
+
+if not exist "%~dp008_Cleanup.bat" (
+    set "BOOTSTRAP_ERROR_MODULE=008_Cleanup.bat"
+    goto BootstrapError
+)
 
 call "%~dp008_Cleanup.bat"
-if errorlevel 1 goto BootstrapError
+
+if errorlevel 1 (
+    set "BOOTSTRAP_ERROR_MODULE=008_Cleanup.bat"
+    goto BootstrapError
+)
 
 
 ::=======================================================================
@@ -95,19 +167,28 @@ exit /b 0
 
 echo.
 
-call "%~dp001_Core.bat" Core.Error
+if exist "%~dp001_Core.bat" (
 
-call "%~dp001_Core.bat" Core.PrintLine
+    call "%~dp001_Core.bat" Core.Error
+    call "%~dp001_Core.bat" Core.PrintLine
+
+)
 
 echo.
 echo Framework initialization failed.
 echo.
-echo One or more modules could not be loaded.
+echo Failed Module:
+echo     %BOOTSTRAP_ERROR_MODULE%
+echo.
+echo The module is missing or failed during initialization.
 echo.
 
-call "%~dp001_Core.bat" Core.PrintLine
+if exist "%~dp001_Core.bat" (
 
-call "%~dp001_Core.bat" Core.Normal
+    call "%~dp001_Core.bat" Core.PrintLine
+    call "%~dp001_Core.bat" Core.Normal
+
+)
 
 exit /b 1
 
@@ -120,19 +201,25 @@ exit /b 1
 
 echo.
 
-call "%~dp001_Core.bat" Core.Error
+if exist "%~dp001_Core.bat" (
 
-call "%~dp001_Core.bat" Core.PrintLine
+    call "%~dp001_Core.bat" Core.Error
+    call "%~dp001_Core.bat" Core.PrintLine
+
+)
 
 echo.
-echo Required module not initialized:
+echo Required module not initialized.
 echo.
-echo     01_Core.bat
+echo     001_Core.bat
 echo.
 
-call "%~dp001_Core.bat" Core.PrintLine
+if exist "%~dp001_Core.bat" (
 
-call "%~dp001_Core.bat" Core.Normal
+    call "%~dp001_Core.bat" Core.PrintLine
+    call "%~dp001_Core.bat" Core.Normal
+
+)
 
 exit /b 1
 

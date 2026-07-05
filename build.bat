@@ -1,12 +1,12 @@
 @echo off
-setlocal EnableExtensions EnableDelayedExpansion
+EnableDelayedExpansion
 
 ::=======================================================================
 :: MPLAB SOURCE EXPORT TOOL
 :: Build Entry
 ::=======================================================================
 
-title MPLAB SOURCE EXPORT TOOL
+
 
 ::=======================================================================
 :: Verify Framework
@@ -21,11 +21,15 @@ if not exist "%~dp0modules\99_Main.bat" (
     exit /b 1
 )
 
+title MPLAB SOURCE EXPORT TOOL
+
 ::=======================================================================
 :: Start Application
 ::=======================================================================
 
 call "%~dp0modules\99_Main.bat"
+
+:: Preserve application exit code across ENDLOCAL
 
 set "EXIT_CODE=%ERRORLEVEL%"
 
