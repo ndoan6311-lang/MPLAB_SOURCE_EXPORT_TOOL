@@ -43,6 +43,11 @@ set "SCAN_INCLUDE_HIDDEN=0"
 
 set "SCAN_INCLUDE_SYSTEM=0"
 
+::-----------------------------------------------------------------------
+:: Scan Database
+::-----------------------------------------------------------------------
+
+set "SCAN_DATABASE=%TEMP%\mplab_scan_database.tmp"
 
 ::=======================================================================
 :: API DISPATCHER
@@ -93,7 +98,8 @@ if /I "%~1"=="Scan.AddFile"           goto Scan_AddFile
 if /I "%~1"=="Scan.GetCount"          goto Scan_GetCount
 if /I "%~1"=="Scan.GetTotalSize"      goto Scan_GetTotalSize
 if /I "%~1"=="Scan.PrintSummary"      goto Scan_PrintSummary
-
+if /I "%~1"=="Scan.GetDatabase"       goto Scan_GetDatabase
+if /I "%~1"=="Scan.SaveResult"        goto Scan_SaveResult
 
 ::-----------------------------------------------------------------------
 :: Unknown API
@@ -194,6 +200,10 @@ set "SCAN_END_TIME="
 
 set /A SCAN_FILE_COUNT=0
 set /A SCAN_TOTAL_SIZE=0
+
+if exist "%SCAN_DATABASE%" (
+    del /Q "%SCAN_DATABASE%"
+)
 
 exit /b %RC_SUCCESS%
 
@@ -437,12 +447,10 @@ for /L %%I in (1,1,%IGNORE_COUNT%) do (
 
     call set "IGNORE_DIR=%%IGNORE_DIR_%%I%%"
 
-    echo %~2 | find /I "!IGNORE_DIR!" >nul
+    call "%~dp001_Core.bat" Core.StringContains "%~2" "!IGNORE_DIR!"
 
     if not errorlevel 1 (
-
         exit /b %RC_SCAN_FAILED%
-
     )
 
 )
@@ -474,9 +482,17 @@ if "%~2"=="" (
 
 for %%A in ("%~2") do (
 
-    if /I "%%~xA"==".c" exit /b %RC_SUCCESS%
+    call "%~dp001_Core.bat" Core.StringEquals "%%~xA" ".c"
 
-    if /I "%%~xA"==".h" exit /b %RC_SUCCESS%
+    if not errorlevel 1 (
+        exit /b %RC_SUCCESS%
+    )
+
+    call "%~dp001_Core.bat" Core.StringEquals "%%~xA" ".h"
+
+    if not errorlevel 1 (
+        exit /b %RC_SUCCESS%
+    )
 
 )
 
@@ -511,6 +527,12 @@ exit /b %RC_FILE_NOT_FOUND%
 set /A SCAN_FILE_COUNT+=1
 
 set /A SCAN_TOTAL_SIZE+=SCAN_CURRENT_SIZE
+
+call "%~f0" Scan.SaveResult
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
 
 exit /b %RC_SUCCESS%
 
@@ -587,5 +609,77 @@ echo     Files Scanned : %SCAN_FILE_COUNT%
 echo     Total Size    : %SCAN_TOTAL_SIZE_TEXT%
 
 echo.
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Scan.GetDatabase
+::-----------------------------------------------------------------------
+:: Purpose
+::     Get scan database path.
+::
+:: Output
+::     SCAN_DATABASE_PATH
+::
+:: Return
+::     RC_SUCCESS
+::
+:: NOTE
+::     Database path is stored in SCAN_DATABASE.
+::     This API exists for interface consistency.
+::
+::=======================================================================
+
+:Scan_GetDatabase
+
+if not exist "%SCAN_DATABASE%" (
+    exit /b %RC_FILE_NOT_FOUND%
+)
+
+set "SCAN_DATABASE_PATH=%SCAN_DATABASE%"
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Scan.SaveResult
+::-----------------------------------------------------------------------
+:: Purpose
+::     Save current scan result to scan database.
+::
+:: Database Format
+::
+::     FullPath|FileName|BaseName|Extension|FileSize
+::
+:: Example
+::
+::     D:\Project\main.c|main.c|main|.c|1520
+::
+:: Input
+::     SCAN_CURRENT_PATH
+::     SCAN_CURRENT_FILE
+::     SCAN_CURRENT_NAME
+::     SCAN_CURRENT_EXT
+::     SCAN_CURRENT_SIZE
+::
+:: Return
+::     RC_SUCCESS
+::
+:: Database Format v1
+::
+::=======================================================================
+
+:Scan_SaveResult
+
+if "%SCAN_CURRENT_PATH%"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+if "%SCAN_DATABASE%"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+>>"%SCAN_DATABASE%" (
+    echo %SCAN_CURRENT_PATH%^|%SCAN_CURRENT_FILE%^|%SCAN_CURRENT_NAME%^|%SCAN_CURRENT_EXT%^|%SCAN_CURRENT_SIZE%
+)
 
 exit /b %RC_SUCCESS%

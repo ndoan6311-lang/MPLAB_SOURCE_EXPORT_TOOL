@@ -265,15 +265,21 @@ exit /b %RC_SUCCESS%
 
 :Menu_Validate
 
-if "%MENU_SELECTED_OPTION%"=="1" (
-    exit /b %RC_SUCCESS%
+set /A MENU_OPTION=%MENU_SELECTED_OPTION% 2>nul
+
+if errorlevel 1 (
+    exit /b %RC_INVALID_PARAMETER%
 )
 
-if "%MENU_SELECTED_OPTION%"=="2" (
-    exit /b %RC_SUCCESS%
+if %MENU_OPTION% LSS %MENU_MIN_OPTION% (
+    exit /b %RC_INVALID_PARAMETER%
 )
 
-exit /b %RC_INVALID_PARAMETER%
+if %MENU_OPTION% GTR %MENU_MAX_OPTION% (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+exit /b %RC_SUCCESS%
 
 :: Part 6 03_Menu.bat
 

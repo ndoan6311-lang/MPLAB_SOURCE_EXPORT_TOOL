@@ -91,12 +91,18 @@ set "RC_ERROR=1"
 set "RC_INVALID_PARAMETER=2"
 
 ::--------------------------------------------------
+:: Search / String
+::--------------------------------------------------
+
+set "RC_NO_MATCH=3"
+
+::--------------------------------------------------
 :: File System
 ::--------------------------------------------------
 
-set "RC_FILE_NOT_FOUND=3"
-set "RC_PROJECT_NOT_FOUND=4"
-set "RC_EXPORT_FAILED=5"
+set "RC_FILE_NOT_FOUND=4"
+set "RC_PROJECT_NOT_FOUND=5"
+set "RC_EXPORT_FAILED=6"
 
 ::--------------------------------------------------
 :: Runtime
@@ -146,6 +152,19 @@ if /I "%~1"=="Core.GetCurrentTime"   goto Core_GetCurrentTime
 if /I "%~1"=="Core.FileExists"       goto Core_FileExists
 if /I "%~1"=="Core.DirectoryExists"  goto Core_DirectoryExists
 if /I "%~1"=="Core.FormatDuration"   goto Core_FormatDuration
+
+::-----------------------------------------------------------------------
+:: String API
+::-----------------------------------------------------------------------
+
+if /I "%~1"=="Core.StringContains"   goto Core_StringContains
+if /I "%~1"=="Core.StringEquals"     goto Core_StringEquals
+if /I "%~1"=="Core.StringStartsWith" goto Core_StringStartsWith
+if /I "%~1"=="Core.StringEndsWith"   goto Core_StringEndsWith
+if /I "%~1"=="Core.StringReplace"    goto Core_StringReplace
+if /I "%~1"=="Core.StringTrim"       goto Core_StringTrim
+if /I "%~1"=="Core.StringSplit"      goto Core_StringSplit
+if /I "%~1"=="Core.StringLength"     goto Core_StringLength
 
 call "%~f0" Core.Error
 
@@ -718,3 +737,88 @@ pause
 
 exit /b %RC_SUCCESS%
 
+:: Part 6 01_Core.bat
+
+::#######################################################################
+:: STRING API
+::#######################################################################
+
+::=======================================================================
+:: Core.StringContains
+::-----------------------------------------------------------------------
+:: Purpose
+::     Determine whether a string contains another string.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.StringContains "Text" "Keyword"
+::
+:: Input
+::     %2 = Source text
+::     %3 = Search text
+::
+:: Return
+::     RC_SUCCESS
+::         Search text found.
+::
+::     RC_FILE_NOT_FOUND
+::         Search text not found.
+::
+::     RC_INVALID_PARAMETER
+::=======================================================================
+
+:Core_StringContains
+
+if "%~2"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+if "%~3"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+echo(%~2| find /I "%~3" >nul
+
+if errorlevel 1 (
+    exit /b %RC_NO_MATCH%
+)
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Core.StringEquals
+::-----------------------------------------------------------------------
+:: Purpose
+::     Compare two strings for equality.
+::
+:: Usage
+::     call "%~dp001_Core.bat" Core.StringEquals "Text1" "Text2"
+::
+:: Input
+::     %2 = First string
+::     %3 = Second string
+::
+:: Return
+::     RC_SUCCESS
+::         Strings are equal.
+::
+::     RC_FILE_NOT_FOUND
+::         Strings are different.
+::
+::     RC_INVALID_PARAMETER
+::=======================================================================
+
+:Core_StringEquals
+
+if "%~2"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+if "%~3"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+if /I "%~2"=="%~3" (
+    exit /b %RC_SUCCESS%
+)
+
+exit /b %RC_NO_MATCH%
