@@ -130,8 +130,6 @@ if "%~1"=="" (
 if /I "%~1"=="Core.Initialize"       goto Core_Initialize
 if /I "%~1"=="Core.Exit"             goto Core_Exit
 
-if /I "%~1"=="Core.ResetStatistics"  goto Core_ResetStatistics
-
 if /I "%~1"=="Core.PrintBanner"      goto Core_PrintBanner
 if /I "%~1"=="Core.PrintLine"        goto Core_PrintLine
 if /I "%~1"=="Core.PrintCenter"      goto Core_PrintCenter
@@ -200,7 +198,7 @@ exit /b %RC_INVALID_PARAMETER%
 ::    • Clear console
 ::    • Reset console color
 ::    • Initialize session variables
-::    • Reset runtime statistics
+::    • Prepare runtime environment
 ::=======================================================================
 
 :Core_Initialize
@@ -229,45 +227,11 @@ set "ELAPSED_TIME="
 
 set "TEMP_FILE=%TEMP%\mplab_export.tmp"
 
-::--------------------------------------------------
-:: Reset Runtime
-::--------------------------------------------------
 
-call "%~f0" Core.ResetStatistics
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
 
 exit /b %RC_SUCCESS%
 
 
-
-::=======================================================================
-:: Core.ResetStatistics
-::-----------------------------------------------------------------------
-:: Purpose
-::     Reset all runtime statistics.
-::
-:: Responsibilities
-::      • Reset export statistics
-::      • Reset runtime counters
-::
-:: NOTE
-::     Scan statistics are managed by 02_Scan.bat.
-::=======================================================================
-
-:Core_ResetStatistics
-
-set /A TOTAL_FILES_EXPORTED=0
-
-set /A TOTAL_LINES=0
-
-set /A TOTAL_CHARACTERS=0
-
-set /A TOTAL_COMMENT_LINES=0
-
-exit /b %RC_SUCCESS%
 
 
 
@@ -282,38 +246,16 @@ exit /b %RC_SUCCESS%
 ::     06_Statistics.bat is completed.
 ::=======================================================================
 
-
 :Core_Exit
 
-call "%~dp002_Scan.bat" Scan.GetTotalSize
+call "%~f0" Core.Normal
 
 if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-set "END_TIME=%TIME%"
-
-echo.
-
-call "%~f0" Core.PrintLine
-
-echo.
-echo                     Program Finished
-echo.
-
-echo     Project          : %PROJECT_NAME%
-echo     Files Scanned    : %SCAN_FILE_COUNT%
-echo     Total Size       : %SCAN_TOTAL_SIZE_TEXT%
-echo     Files Exported   : %TOTAL_FILES_EXPORTED%
-echo     Elapsed Time     : %ELAPSED_TIME%
-
-echo.
-
-call "%~f0" Core.PrintLine
-
-echo.
-
-call "%~f0" Core.Normal
+rem Cleanup runtime
+rem (future)
 
 exit /b %RC_SUCCESS%
 

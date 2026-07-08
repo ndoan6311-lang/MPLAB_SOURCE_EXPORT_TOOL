@@ -61,11 +61,16 @@ if "%~1"=="" (
     exit /b %RC_SUCCESS%
 )
 
-if /I "%~1"=="Menu.Start"           goto Menu_Start
-if /I "%~1"=="Menu.Show"            goto Menu_Show
-if /I "%~1"=="Menu.GetSelection"    goto Menu_GetSelection
-if /I "%~1"=="Menu.Validate"        goto Menu_Validate
-if /I "%~1"=="Menu.Dispatch"        goto Menu_Dispatch
+if /I "%~1"=="Menu.Start"                   goto Menu_Start
+if /I "%~1"=="Menu.Show"                    goto Menu_Show
+if /I "%~1"=="Menu.GetSelection"            goto Menu_GetSelection
+if /I "%~1"=="Menu.Validate"                goto Menu_Validate
+if /I "%~1"=="Menu.Dispatch"                goto Menu_Dispatch
+if /I "%~1"=="Menu.ShowScanSummary"         goto Menu_ShowScanSummary
+if /I "%~1"=="Menu.ShowExportSummary"       goto Menu_ShowExportSummary
+if /I "%~1"=="Menu.ShowStatisticsSummary"   goto Menu_ShowStatisticsSummary
+if /I "%~1"=="Menu.ShowFinished"            goto Menu_ShowFinished
+
 
 call "%~dp001_Core.bat" Core.Error
 
@@ -310,14 +315,45 @@ exit /b %RC_SUCCESS%
 
 if "%MENU_SELECTED_OPTION%"=="1" (
 
-    call "%~dp005_Export.bat" Export.Start
+    call "%~dp006_Statistics.bat" Statistics.Start
+
+    if errorlevel 1 exit /b %ERRORLEVEL%
+
+    call "%~dp001_Core.bat" Core.PrintCenter "SCANNING PROJECT"
+
+    call "%~dp002_Scan.bat" Scan.Start
+
+    if errorlevel 1 exit /b %ERRORLEVEL%
+
+    call "%~f0" Menu.ShowScanSummary
+
+    if errorlevel 1 exit /b %ERRORLEVEL%
+
+    call "%~dp002_Scan.bat" Scan.GetDatabase
+
+    if errorlevel 1 exit /b %ERRORLEVEL%
+
+    call "%~dp001_Core.bat" Core.PrintCenter "EXPORT SOURCE"
+
+    call "%~dp005_Export.bat" Export.Start "%SCAN_DATABASE_PATH%"
+
+    if errorlevel 1 exit /b %ERRORLEVEL%
+
+    call "%~f0" Menu.ShowExportSummary
+
+    if errorlevel 1 exit /b %ERRORLEVEL%
+
+    call "%~f0" Menu.ShowStatisticsSummary
+
+    if errorlevel 1 exit /b %ERRORLEVEL%
+
+    call "%~f0" Menu.ShowFinished
 
     if errorlevel 1 (
         exit /b %ERRORLEVEL%
     )
 
     exit /b %RC_SUCCESS%
-
 )
 
 if "%MENU_SELECTED_OPTION%"=="2" (
@@ -327,6 +363,121 @@ if "%MENU_SELECTED_OPTION%"=="2" (
 )
 
 exit /b %RC_INVALID_PARAMETER%
+
+
+
+
+
+
+:Menu_ShowScanSummary
+
+call "%~dp001_Core.bat" Core.PrintCenter "SCAN SUMMARY"
+
+call "%~dp002_Scan.bat" Scan.GetCount
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+call "%~dp002_Scan.bat" Scan.GetTotalSize
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+echo     Files Scanned : %SCAN_GET_COUNT%
+echo     Total Size    : %SCAN_GET_TOTAL_SIZE_TEXT%
+
+echo.
+
+exit /b %RC_SUCCESS%
+
+
+
+
+
+
+
+
+:Menu_ShowExportSummary
+
+call "%~dp001_Core.bat" Core.PrintCenter "EXPORT SUMMARY"
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+call "%~dp005_Export.bat" Export.GetSummary
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+echo     Start Time : %EXPORT_GET_START_TIME%
+echo     End Time   : %EXPORT_GET_END_TIME%
+echo     Duration   : %EXPORT_GET_DURATION%
+echo     Output File: %EXPORT_GET_OUTPUT_FILE%
+
+echo.
+
+exit /b %RC_SUCCESS%
+
+
+
+
+
+
+
+
+
+:Menu_ShowStatisticsSummary
+
+call "%~dp001_Core.bat" Core.PrintCenter "STATISTICS"
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+call "%~dp006_Statistics.bat" Statistics.GetSummary
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+echo     Files Exported : %STAT_GET_FILES%
+echo     Total Lines    : %STAT_GET_LINES%
+echo     Characters     : %STAT_GET_CHARACTERS%
+echo     Comment Lines  : %STAT_GET_COMMENTS%
+
+echo.
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Menu.ShowFinished
+::-----------------------------------------------------------------------
+:: Purpose
+::     Display application finished message.
+::
+:: Responsibilities
+::     • Notify user that workflow has completed
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
+:Menu_ShowFinished
+
+call "%~dp001_Core.bat" Core.PrintCenter "PROGRAM FINISHED"
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+echo     Export completed successfully.
+echo.
+
+exit /b %RC_SUCCESS%
 
 :: Part 7 03_Menu.bat
 

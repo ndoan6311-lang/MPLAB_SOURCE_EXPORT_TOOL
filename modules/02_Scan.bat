@@ -43,6 +43,15 @@ set "SCAN_INCLUDE_HIDDEN=0"
 
 set "SCAN_INCLUDE_SYSTEM=0"
 
+::=======================================================================
+:: GETTER OUTPUT
+::=======================================================================
+
+set "SCAN_GET_FILE_COUNT="
+set "SCAN_GET_TOTAL_SIZE="
+set "SCAN_GET_TOTAL_SIZE_TEXT="
+set "SCAN_GET_DATABASE="
+
 ::-----------------------------------------------------------------------
 :: Scan Database
 ::-----------------------------------------------------------------------
@@ -55,7 +64,7 @@ set "SCAN_DATABASE=%TEMP%\mplab_scan_database.tmp"
 :: Usage
 ::     call "02_Scan.bat" Scan.Initialize
 ::     call "02_Scan.bat" Scan.Start
-::     call "02_Scan.bat" Scan.PrintSummary
+::     
 ::
 ::=======================================================================
 
@@ -97,7 +106,6 @@ if /I "%~1"=="Scan.IsValidExtension"  goto Scan_IsValidExtension
 if /I "%~1"=="Scan.AddFile"           goto Scan_AddFile
 if /I "%~1"=="Scan.GetCount"          goto Scan_GetCount
 if /I "%~1"=="Scan.GetTotalSize"      goto Scan_GetTotalSize
-if /I "%~1"=="Scan.PrintSummary"      goto Scan_PrintSummary
 if /I "%~1"=="Scan.GetDatabase"       goto Scan_GetDatabase
 if /I "%~1"=="Scan.SaveResult"        goto Scan_SaveResult
 
@@ -201,10 +209,6 @@ set "SCAN_END_TIME="
 set /A SCAN_FILE_COUNT=0
 set /A SCAN_TOTAL_SIZE=0
 
-if exist "%SCAN_DATABASE%" (
-    del /Q "%SCAN_DATABASE%"
-)
-
 exit /b %RC_SUCCESS%
 
 
@@ -226,34 +230,13 @@ exit /b %RC_SUCCESS%
 :Scan_Start
 
 call "%~f0" Scan.Initialize
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
-
-call "%~dp001_Core.bat" Core.PrintCenter "SCANNING PROJECT"
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
+if errorlevel 1 exit /b %ERRORLEVEL%
 
 call "%~f0" Scan.ScanDirectory "%SCAN_ROOT%"
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
-
-call "%~f0" Scan.PrintSummary
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
+if errorlevel 1 exit /b %ERRORLEVEL%
 
 call "%~dp001_Core.bat" Core.GetCurrentTime
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
+if errorlevel 1 exit /b %ERRORLEVEL%
 
 set "SCAN_END_TIME=%CURRENT_TIME%"
 
@@ -553,6 +536,8 @@ exit /b %RC_SUCCESS%
 
 :Scan_GetCount
 
+set "SCAN_GET_FILE_COUNT=%SCAN_FILE_COUNT%"
+
 exit /b %RC_SUCCESS%
 
 
@@ -579,38 +564,13 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-set "SCAN_TOTAL_SIZE_TEXT=%SIZE_TEXT%"
+set "SCAN_GET_TOTAL_SIZE=%SCAN_TOTAL_SIZE%"
+set "SCAN_GET_TOTAL_SIZE_TEXT=%SIZE_TEXT%"
 
 exit /b %RC_SUCCESS%
 
 
 
-::=======================================================================
-:: Scan.PrintSummary
-::-----------------------------------------------------------------------
-:: Purpose
-::     Print scan summary.
-::
-:: Return
-::     RC_SUCCESS
-::=======================================================================
-
-:Scan_PrintSummary
-
-call "%~dp001_Core.bat" Core.PrintCenter "SCAN SUMMARY"
-
-call "%~f0" Scan.GetTotalSize
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
-
-echo     Files Scanned : %SCAN_FILE_COUNT%
-echo     Total Size    : %SCAN_TOTAL_SIZE_TEXT%
-
-echo.
-
-exit /b %RC_SUCCESS%
 
 ::=======================================================================
 :: Scan.GetDatabase
@@ -619,7 +579,7 @@ exit /b %RC_SUCCESS%
 ::     Get scan database path.
 ::
 :: Output
-::     SCAN_DATABASE_PATH
+::     SCAN_GET_DATABASE
 ::
 :: Return
 ::     RC_SUCCESS
@@ -636,7 +596,7 @@ if not exist "%SCAN_DATABASE%" (
     exit /b %RC_FILE_NOT_FOUND%
 )
 
-set "SCAN_DATABASE_PATH=%SCAN_DATABASE%"
+set "SCAN_GET_DATABASE=%SCAN_DATABASE%"
 
 exit /b %RC_SUCCESS%
 
