@@ -24,6 +24,14 @@
 ::#######################################################################
 
 ::=======================================================================
+:: MODULE INITIALIZATION
+::=======================================================================
+
+if not defined EXPORT_MODULE_LOADED (
+    set "EXPORT_MODULE_LOADED=1"
+)
+
+::=======================================================================
 :: EXPORT CONFIGURATION
 ::=======================================================================
 
@@ -283,7 +291,10 @@ exit /b %RC_SUCCESS%
 
 :Export_Finalize
 
-call "%~f0" Export.EndSession
+call "%~f0" Export.UpdateEndTime
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~f0" Export.CalculateDuration
 if errorlevel 1 exit /b %ERRORLEVEL%
 
 call "%~f0" Export.WriteDocumentFooter
@@ -706,17 +717,9 @@ if errorlevel 1 (
 
 >>"%EXPORT_OUTPUT_FILE%" echo.
 
-call "%~dp006_Statistics.bat" Statistics.AddLine "%LINE_COUNT%"
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
-
-call "%~dp006_Statistics.bat" Statistics.AddCharacter "%CHAR_COUNT%"
-
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
+rem TODO
+rem call "%~dp006_Statistics.bat" Statistics.AddLine "%LINE_COUNT%"
+rem call "%~dp006_Statistics.bat" Statistics.AddCharacter "%CHAR_COUNT%"
 
 exit /b %RC_SUCCESS%
 

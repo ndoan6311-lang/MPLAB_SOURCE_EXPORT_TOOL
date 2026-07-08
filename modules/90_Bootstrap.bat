@@ -36,28 +36,28 @@ set "BOOTSTRAP_MODULE_LOADED=1"
 :: LOAD FRAMEWORK MODULES
 ::=======================================================================
 
-call :Bootstrap_LoadModule "001_Core.bat"
+call :Bootstrap_LoadModule "01_Core.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
-call :Bootstrap_LoadModule "002_Scan.bat"
+call :Bootstrap_LoadModule "02_Scan.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
-call :Bootstrap_LoadModule "003_Menu.bat"
+call :Bootstrap_LoadModule "03_Menu.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
-call :Bootstrap_LoadModule "004_Search.bat"
+call :Bootstrap_LoadModule "04_Search.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
-call :Bootstrap_LoadModule "005_Export.bat"
+call :Bootstrap_LoadModule "05_Export.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
-call :Bootstrap_LoadModule "006_Statistics.bat"
+call :Bootstrap_LoadModule "06_Statistics.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
-call :Bootstrap_LoadModule "007_Progress.bat"
+call :Bootstrap_LoadModule "07_Progress.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
-call :Bootstrap_LoadModule "008_Cleanup.bat"
+call :Bootstrap_LoadModule "08_Cleanup.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
 goto Bootstrap_VerifyModules
@@ -83,14 +83,24 @@ if "%~1"=="" (
 
 if not exist "%~dp0%~1" (
 
+    echo.
+    echo ==========================================
+    echo MODULE NOT FOUND
+    echo %~dp0%~1
+    echo ==========================================
+    pause
+
     set "BOOTSTRAP_ERROR_MODULE=%~1"
     exit /b 1
 )
 
+echo Loading %~1 ...
+
 call "%~dp0%~1"
 
-if errorlevel 1 (
+echo Return=%ERRORLEVEL%
 
+if errorlevel 1 (
     set "BOOTSTRAP_ERROR_MODULE=%~1"
     exit /b 1
 
@@ -185,33 +195,33 @@ exit /b 1
 ::=======================================================================
 
 :MissingCore
-set "BOOTSTRAP_ERROR_MODULE=001_Core.bat"
+set "BOOTSTRAP_ERROR_MODULE=01_Core.bat"
 goto MissingModule
 
 :MissingScan
-set "BOOTSTRAP_ERROR_MODULE=002_Scan.bat"
+set "BOOTSTRAP_ERROR_MODULE=02_Scan.bat"
 goto MissingModule
 
 :MissingMenu
-set "BOOTSTRAP_ERROR_MODULE=003_Menu.bat"
+set "BOOTSTRAP_ERROR_MODULE=03_Menu.bat"
 goto MissingModule
 
 :MissingSearch
-set "BOOTSTRAP_ERROR_MODULE=004_Search.bat"
+set "BOOTSTRAP_ERROR_MODULE=04_Search.bat"
 goto MissingModule
 
 :MissingExport
-set "BOOTSTRAP_ERROR_MODULE=005_Export.bat"
+set "BOOTSTRAP_ERROR_MODULE=05_Export.bat"
 goto MissingModule
 
 :MissingStatistics
-set "BOOTSTRAP_ERROR_MODULE=006_Statistics.bat"
+set "BOOTSTRAP_ERROR_MODULE=06_Statistics.bat"
 goto MissingModule
 
 :MissingProgress
-set "BOOTSTRAP_ERROR_MODULE=007_Progress.bat"
+set "BOOTSTRAP_ERROR_MODULE=07_Progress.bat"
 goto MissingModule
 
 :MissingCleanup
-set "BOOTSTRAP_ERROR_MODULE=008_Cleanup.bat"
+set "BOOTSTRAP_ERROR_MODULE=08_Cleanup.bat"
 goto MissingModule

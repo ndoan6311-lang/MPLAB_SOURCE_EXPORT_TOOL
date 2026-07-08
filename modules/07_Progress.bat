@@ -146,7 +146,9 @@ exit /b %RC_SUCCESS%
 
 <nul set /P "= ("
 
-echo %PROGRESS_PERCENT%%%
+<nul set /P "=%PROGRESS_PERCENT%"
+
+echo %%)
 
 exit /b %RC_SUCCESS%
 

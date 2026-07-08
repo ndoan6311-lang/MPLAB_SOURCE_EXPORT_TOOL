@@ -165,6 +165,10 @@ if errorlevel 1 (
 
 set "SCAN_START_TIME=%CURRENT_TIME%"
 
+if exist "%SCAN_DATABASE%" (
+    del /f /q "%SCAN_DATABASE%"
+)
+
 call "%~f0" Scan.Clear
 
 if errorlevel 1 (
@@ -282,13 +286,11 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-for /R "%~2" %%F in (*.*) do (
+for %%E in (*.c *.h) do (
 
-    call "%~f0" Scan.ShouldIgnore "%%~fF"
+    for /R "%~2" %%F in (%%E) do (
 
-    if not errorlevel 1 (
-
-        call "%~f0" Scan.IsValidExtension "%%~fF"
+        call "%~f0" Scan.ShouldIgnore "%%~fF"
 
         if not errorlevel 1 (
 
@@ -372,6 +374,10 @@ exit /b %RC_SUCCESS%
 ::=======================================================================
 
 :Scan_ReadFileInfo
+
+call "%~dp001_Core.bat" Core.RelativePath "%SCAN_CURRENT_PATH%"
+
+set "SCAN_CURRENT_RELATIVE=%RELATIVE_PATH%"
 
 if "%~2"=="" (
     exit /b %RC_INVALID_PARAMETER%
@@ -639,7 +645,7 @@ if "%SCAN_DATABASE%"=="" (
 )
 
 >>"%SCAN_DATABASE%" (
-    echo %SCAN_CURRENT_PATH%^|%SCAN_CURRENT_FILE%^|%SCAN_CURRENT_NAME%^|%SCAN_CURRENT_EXT%^|%SCAN_CURRENT_SIZE%
+    echo %SCAN_CURRENT_PATH%^|%SCAN_CURRENT_RELATIVE%^|%SCAN_CURRENT_FILE%^|%SCAN_CURRENT_NAME%^|%SCAN_CURRENT_EXT%^|%SCAN_CURRENT_SIZE%
 )
 
 exit /b %RC_SUCCESS%

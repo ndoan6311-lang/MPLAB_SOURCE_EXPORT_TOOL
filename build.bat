@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableDelayedExpansion
+setlocal EnableExtensions EnableDelayedExpansion
 
 ::=======================================================================
 :: MPLAB SOURCE EXPORT TOOL

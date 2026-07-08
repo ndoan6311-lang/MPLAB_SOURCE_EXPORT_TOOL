@@ -335,7 +335,7 @@ if "%MENU_SELECTED_OPTION%"=="1" (
 
     call "%~dp001_Core.bat" Core.PrintCenter "EXPORT SOURCE"
 
-    call "%~dp005_Export.bat" Export.Start "%SCAN_DATABASE_PATH%"
+    call "%~dp005_Export.bat" Export.Start "%SCAN_GET_DATABASE%"
 
     if errorlevel 1 exit /b %ERRORLEVEL%
 
@@ -385,8 +385,8 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-echo     Files Scanned : %SCAN_GET_COUNT%
-echo     Total Size    : %SCAN_GET_TOTAL_SIZE_TEXT%
+echo    Files Scanned : %SCAN_GET_FILE_COUNT%
+echo    Total Size    : %SCAN_GET_TOTAL_SIZE_TEXT%
 
 echo.
 

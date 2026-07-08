@@ -181,7 +181,7 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-set "SEARCH_DATABASE=%SCAN_DATABASE_PATH%"
+set "SEARCH_DATABASE=%SCAN_GET_DATABASE%"
 
 exit /b %RC_SUCCESS%
 

@@ -28,12 +28,11 @@
 
 call "%~dp090_Bootstrap.bat"
 
-if errorlevel 1 (
-    echo.
-    echo Failed to initialize framework.
-    echo.
-    exit /b %ERRORLEVEL%
-)
+echo.
+echo Bootstrap Return = %ERRORLEVEL%
+echo.
+
+pause
 
 
 ::=======================================================================
