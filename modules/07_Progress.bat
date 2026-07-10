@@ -51,12 +51,27 @@ if "%~1"=="" (
     exit /b %RC_SUCCESS%
 )
 
-if /I "%~1"=="Progress.Initialize" goto Progress_Initialize
-if /I "%~1"=="Progress.Start"      goto Progress_Start
-if /I "%~1"=="Progress.Update"     goto Progress_Update
-if /I "%~1"=="Progress.Percent"    goto Progress_Percent
-if /I "%~1"=="Progress.Print"      goto Progress_Print
-if /I "%~1"=="Progress.Finish"     goto Progress_Finish
+if /I "%~1"=="Progress.Initialize"  goto Progress_Initialize
+
+::-----------------------------------------------------------------------
+:: Controller API
+::-----------------------------------------------------------------------
+
+if /I "%~1"=="Progress.Start"       goto Progress_Start
+if /I "%~1"=="Progress.Finish"      goto Progress_Finish
+
+::-----------------------------------------------------------------------
+:: Update API
+::-----------------------------------------------------------------------
+
+if /I "%~1"=="Progress.Update"      goto Progress_Update
+if /I "%~1"=="Progress.Percent"     goto Progress_Percent
+
+::-----------------------------------------------------------------------
+:: Display API
+::-----------------------------------------------------------------------
+
+if /I "%~1"=="Progress.Print"       goto Progress_Print
 
 call "%~dp001_Core.bat" Core.Error
 
@@ -75,6 +90,20 @@ exit /b %RC_INVALID_PARAMETER%
 :: INITIALIZATION API
 ::#######################################################################
 
+::=======================================================================
+:: Progress.Initialize
+::-----------------------------------------------------------------------
+:: Purpose
+::     Initialize progress runtime.
+::
+:: Responsibilities
+::     • Reset progress counters
+::     • Clear progress message
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
 :Progress_Initialize
 
 set /A PROGRESS_TOTAL=0
@@ -85,9 +114,32 @@ set "PROGRESS_MESSAGE="
 
 exit /b %RC_SUCCESS%
 
-
+::=======================================================================
+:: Progress.Start
+::-----------------------------------------------------------------------
+:: Purpose
+::     Start a new progress session.
+::
+:: Responsibilities
+::     • Reset progress runtime
+::     • Initialize total progress count
+::
+:: Input
+::     %2 = Total progress count
+::
+:: Output
+::     PROGRESS_TOTAL
+::
+:: Return
+::     RC_SUCCESS
+::     RC_INVALID_PARAMETER
+::=======================================================================
 
 :Progress_Start
+
+if %~2 LEQ 0 (
+    exit /b %RC_INVALID_PARAMETER%
+)
 
 if "%~2"=="" (
     exit /b %RC_INVALID_PARAMETER%
@@ -109,9 +161,31 @@ exit /b %RC_SUCCESS%
 :: UPDATE API
 ::#######################################################################
 
+::=======================================================================
+:: Progress.Update
+::-----------------------------------------------------------------------
+:: Purpose
+::     Update current progress.
+::
+:: Responsibilities
+::     • Increase current progress
+::
+:: Output
+::     PROGRESS_CURRENT
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
 :Progress_Update
 
 set /A PROGRESS_CURRENT+=1
+
+call "%~f0" Progress.Percent
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
 
 exit /b %RC_SUCCESS%
 
@@ -120,6 +194,22 @@ exit /b %RC_SUCCESS%
 ::#######################################################################
 :: DISPLAY API
 ::#######################################################################
+
+::=======================================================================
+:: Progress.Percent
+::-----------------------------------------------------------------------
+:: Purpose
+::     Calculate current progress percentage.
+::
+:: Responsibilities
+::     • Calculate progress percentage
+::
+:: Output
+::     PROGRESS_PERCENT
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
 
 :Progress_Percent
 
@@ -132,9 +222,26 @@ set /A PROGRESS_PERCENT=PROGRESS_CURRENT*100/PROGRESS_TOTAL
 
 exit /b %RC_SUCCESS%
 
-
+::=======================================================================
+:: Progress.Print
+::-----------------------------------------------------------------------
+:: Purpose
+::     Display current progress.
+::
+:: Responsibilities
+::     • Print progress information
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
 
 :Progress_Print
+
+call "%~f0" Progress.Percent
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
 
 <nul set /P "=Progress : "
 
@@ -158,7 +265,22 @@ exit /b %RC_SUCCESS%
 :: FINISH API
 ::#######################################################################
 
+::=======================================================================
+:: Progress.Finish
+::-----------------------------------------------------------------------
+:: Purpose
+::     Finish current progress session.
+::
+:: Responsibilities
+::     • Finalize progress display
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
 :Progress_Finish
+
+echo.
 
 exit /b %RC_SUCCESS%
 

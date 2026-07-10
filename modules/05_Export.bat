@@ -256,6 +256,10 @@ if errorlevel 1 (
 
 call "%~dp001_Core.bat" Core.GetCurrentTime
 
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
 set "EXPORT_START_TIME=%CURRENT_TIME%"
 
 call "%~f0" Export.WriteDocumentHeader
@@ -263,6 +267,8 @@ call "%~f0" Export.WriteDocumentHeader
 if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
+
+
 
 exit /b %RC_SUCCESS%
 
@@ -305,19 +311,6 @@ exit /b %RC_SUCCESS%
 
 
 
-
-
-:Export_EndSession
-
-call "%~dp001_Core.bat" Core.GetCurrentTime
-if errorlevel 1 exit /b %ERRORLEVEL%
-
-set "EXPORT_END_TIME=%CURRENT_TIME%"
-
-rem TODO
-set "EXPORT_DURATION=00:00:00"
-
-exit /b %RC_SUCCESS%
 
 ::=======================================================================
 :: Export.UpdateEndTime
@@ -383,7 +376,7 @@ exit /b %RC_SUCCESS%
 ::     • Reset runtime variables
 ::
 :: NOTE
-::     Source Database is NOT modified.
+::      Source database is preserved.
 ::=======================================================================
 
 :Export_Clear
@@ -484,6 +477,7 @@ exit /b %RC_SUCCESS%
 ::
 :: Output
 ::     EXPORT_CURRENT_PATH
+::     EXPORT_CURRENT_RELATIVE
 ::     EXPORT_CURRENT_FILE
 ::     EXPORT_CURRENT_NAME
 ::     EXPORT_CURRENT_EXT
@@ -500,13 +494,19 @@ if "%~2"=="" (
     exit /b %RC_INVALID_PARAMETER%
 )
 
-for /F "tokens=1-5 delims=|" %%A in ("%~2") do (
+for /F "tokens=1-6 delims=|" %%A in ("%~2") do (
 
     set "EXPORT_CURRENT_PATH=%%~A"
-    set "EXPORT_CURRENT_FILE=%%~B"
-    set "EXPORT_CURRENT_NAME=%%~C"
-    set "EXPORT_CURRENT_EXT=%%~D"
-    set "EXPORT_CURRENT_SIZE=%%~E"
+
+    set "EXPORT_CURRENT_RELATIVE=%%~B"
+
+    set "EXPORT_CURRENT_FILE=%%~C"
+
+    set "EXPORT_CURRENT_NAME=%%~D"
+
+    set "EXPORT_CURRENT_EXT=%%~E"
+
+    set "EXPORT_CURRENT_SIZE=%%~F"
 
 )
 
@@ -547,6 +547,8 @@ exit /b %RC_SUCCESS%
 if "%~2"=="" (
     exit /b %RC_INVALID_PARAMETER%
 )
+
+set /A EXPORT_CURRENT_INDEX+=1
 
 call "%~f0" Export.ReadRecord "%~2"
 
@@ -687,7 +689,9 @@ exit /b %RC_SUCCESS%
 >>"%EXPORT_OUTPUT_FILE%" (
 
 echo ------------------------------------------------------------
-echo File : %EXPORT_CURRENT_PATH%
+echo File #%EXPORT_CURRENT_INDEX% : %EXPORT_CURRENT_FILE%
+echo Path : %EXPORT_CURRENT_PATH%
+echo Size : %EXPORT_CURRENT_SIZE% bytes
 echo ------------------------------------------------------------
 echo.
 
@@ -717,9 +721,11 @@ if errorlevel 1 (
 
 >>"%EXPORT_OUTPUT_FILE%" echo.
 
-rem TODO
 rem call "%~dp006_Statistics.bat" Statistics.AddLine "%LINE_COUNT%"
+rem if errorlevel 1 exit /b %ERRORLEVEL%
+
 rem call "%~dp006_Statistics.bat" Statistics.AddCharacter "%CHAR_COUNT%"
+rem if errorlevel 1 exit /b %ERRORLEVEL%
 
 exit /b %RC_SUCCESS%
 
@@ -761,9 +767,19 @@ exit /b %RC_SUCCESS%
 
 :Export_WriteDocumentFooter
 
+call "%~dp006_Statistics.bat" Statistics.GetSummary
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
 >>"%EXPORT_OUTPUT_FILE%" (
 
 echo.
+echo ============================================================
+echo End Time : %EXPORT_END_TIME%
+echo Duration : %EXPORT_DURATION%
+echo Files    : %STAT_GET_FILES%
 echo ============================================================
 echo End Of Export
 echo ============================================================

@@ -29,7 +29,7 @@ if defined BOOTSTRAP_MODULE_LOADED (
     exit /b 0
 )
 
-set "BOOTSTRAP_MODULE_LOADED=1"
+
 
 
 ::=======================================================================
@@ -102,8 +102,8 @@ echo Return=%ERRORLEVEL%
 
 if errorlevel 1 (
     set "BOOTSTRAP_ERROR_MODULE=%~1"
-    exit /b 1
-
+    call :BootstrapError
+    exit /b %ERRORLEVEL%
 )
 
 exit /b 0
@@ -132,6 +132,8 @@ if not defined CLEANUP_MODULE_LOADED    goto MissingCleanup
 :: BOOTSTRAP COMPLETE
 ::=======================================================================
 
+set "BOOTSTRAP_MODULE_LOADED=1"
+
 exit /b 0
 
 
@@ -141,14 +143,9 @@ exit /b 0
 
 :BootstrapError
 
-echo.
+call "%~dp001_Core.bat" Core.Error
 
-if exist "%~dp001_Core.bat" (
-
-    call "%~dp001_Core.bat" Core.Error
-    call "%~dp001_Core.bat" Core.PrintLine
-
-)
+call "%~dp001_Core.bat" Core.PrintLine
 
 echo.
 echo Framework initialization failed.
@@ -156,15 +153,10 @@ echo.
 echo Failed Module:
 echo     %BOOTSTRAP_ERROR_MODULE%
 echo.
-echo The module is missing or failed during initialization.
-echo.
 
-if exist "%~dp001_Core.bat" (
+call "%~dp001_Core.bat" Core.PrintLine
 
-    call "%~dp001_Core.bat" Core.PrintLine
-    call "%~dp001_Core.bat" Core.Normal
-
-)
+call "%~dp001_Core.bat" Core.Normal
 
 exit /b 1
 
@@ -196,32 +188,32 @@ exit /b 1
 
 :MissingCore
 set "BOOTSTRAP_ERROR_MODULE=01_Core.bat"
-goto MissingModule
+goto BootstrapError
 
 :MissingScan
 set "BOOTSTRAP_ERROR_MODULE=02_Scan.bat"
-goto MissingModule
+goto BootstrapError
 
 :MissingMenu
 set "BOOTSTRAP_ERROR_MODULE=03_Menu.bat"
-goto MissingModule
+goto BootstrapError
 
 :MissingSearch
 set "BOOTSTRAP_ERROR_MODULE=04_Search.bat"
-goto MissingModule
+goto BootstrapError
 
 :MissingExport
 set "BOOTSTRAP_ERROR_MODULE=05_Export.bat"
-goto MissingModule
+goto BootstrapError
 
 :MissingStatistics
 set "BOOTSTRAP_ERROR_MODULE=06_Statistics.bat"
-goto MissingModule
+goto BootstrapError
 
 :MissingProgress
 set "BOOTSTRAP_ERROR_MODULE=07_Progress.bat"
-goto MissingModule
+goto BootstrapError
 
 :MissingCleanup
 set "BOOTSTRAP_ERROR_MODULE=08_Cleanup.bat"
-goto MissingModule
+goto BootstrapError

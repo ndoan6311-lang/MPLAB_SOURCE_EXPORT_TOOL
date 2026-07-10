@@ -42,6 +42,8 @@ set "SEARCH_DATABASE="
 
 set /A SEARCH_RESULT_COUNT=0
 
+set "SEARCH_GET_RESULT_COUNT="
+
 ::=======================================================================
 :: API DISPATCHER
 ::
@@ -181,6 +183,10 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
+if "%SCAN_GET_DATABASE%"=="" (
+    exit /b %RC_FILE_NOT_FOUND%
+)
+
 set "SEARCH_DATABASE=%SCAN_GET_DATABASE%"
 
 exit /b %RC_SUCCESS%
@@ -218,6 +224,7 @@ if exist "%SEARCH_RESULT_FILE%" (
 set /A SEARCH_RESULT_COUNT=0
 
 set "SEARCH_CURRENT_PATH="
+set "SEARCH_CURRENT_RELATIVE="
 set "SEARCH_CURRENT_FILE="
 set "SEARCH_CURRENT_NAME="
 set "SEARCH_CURRENT_EXT="
@@ -250,6 +257,7 @@ exit /b %RC_SUCCESS%
 ::
 :: Output
 ::     SEARCH_CURRENT_PATH
+::     SEARCH_CURRENT_RELATIVE
 ::     SEARCH_CURRENT_FILE
 ::     SEARCH_CURRENT_NAME
 ::     SEARCH_CURRENT_EXT
@@ -266,13 +274,14 @@ if "%~2"=="" (
     exit /b %RC_INVALID_PARAMETER%
 )
 
-for /F "tokens=1-5 delims=|" %%A in ("%~2") do (
+for /F "tokens=1-6 delims=|" %%A in ("%~2") do (
 
-    set "SEARCH_CURRENT_PATH=%%~A"
-    set "SEARCH_CURRENT_FILE=%%~B"
-    set "SEARCH_CURRENT_NAME=%%~C"
-    set "SEARCH_CURRENT_EXT=%%~D"
-    set "SEARCH_CURRENT_SIZE=%%~E"
+    set "SEARCH_CURRENT_PATH=%%A"
+    set "SEARCH_CURRENT_RELATIVE=%%B"
+    set "SEARCH_CURRENT_FILE=%%C"
+    set "SEARCH_CURRENT_NAME=%%D"
+    set "SEARCH_CURRENT_EXT=%%E"
+    set "SEARCH_CURRENT_SIZE=%%F"
 
 )
 
@@ -312,6 +321,14 @@ if "%~2"=="" (
 )
 
 set "SEARCH_CRITERIA=%~2"
+
+call "%~dp001_Core.bat" Core.StringTrim "%SEARCH_CRITERIA%"
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+set "SEARCH_CRITERIA=%STRING_RESULT%"
 
 exit /b %RC_SUCCESS%
 
@@ -409,6 +426,7 @@ exit /b %RC_NO_MATCH%
 ::
 :: Input
 ::     SEARCH_CURRENT_PATH
+::     SEARCH_CURRENT_RELATIVE
 ::     SEARCH_CURRENT_FILE
 ::     SEARCH_CURRENT_NAME
 ::     SEARCH_CURRENT_EXT
@@ -429,7 +447,13 @@ if "%SEARCH_CURRENT_PATH%"=="" (
 )
 
 >>"%SEARCH_RESULT_FILE%" (
-    echo %SEARCH_CURRENT_PATH%^|%SEARCH_CURRENT_FILE%^|%SEARCH_CURRENT_NAME%^|%SEARCH_CURRENT_EXT%^|%SEARCH_CURRENT_SIZE%
+    >>"%SEARCH_RESULT_FILE%" echo(
+%SEARCH_CURRENT_PATH%^|
+%SEARCH_CURRENT_RELATIVE%^|
+%SEARCH_CURRENT_FILE%^|
+%SEARCH_CURRENT_NAME%^|
+%SEARCH_CURRENT_EXT%^|
+%SEARCH_CURRENT_SIZE%
 )
 
 set /A SEARCH_RESULT_COUNT+=1
@@ -494,7 +518,7 @@ for /F "usebackq delims=" %%R in ("%SEARCH_DATABASE%") do (
 
     call "%~f0" Search.Match
 
-    if not errorlevel 1 (
+    if %ERRORLEVEL% EQU %RC_SUCCESS% (
 
         call "%~f0" Search.AddResult
 
@@ -534,6 +558,8 @@ exit /b %RC_SUCCESS%
 
 :Search_GetResult
 
+setlocal EnableDelayedExpansion
+
 if "%~2"=="" (
     exit /b %RC_INVALID_PARAMETER%
 )
@@ -543,7 +569,6 @@ if not exist "%SEARCH_RESULT_FILE%" (
 )
 
 set "SEARCH_RESULT="
-
 set /A SEARCH_INDEX=0
 
 for /F "usebackq delims=" %%A in ("%SEARCH_RESULT_FILE%") do (
@@ -552,12 +577,17 @@ for /F "usebackq delims=" %%A in ("%SEARCH_RESULT_FILE%") do (
 
     if !SEARCH_INDEX! EQU %~2 (
         set "SEARCH_RESULT=%%A"
-        exit /b %RC_SUCCESS%
     )
 
 )
 
-exit /b %RC_FILE_NOT_FOUND%
+if defined SEARCH_RESULT (
+    exit /b %RC_SUCCESS%
+)
+
+endlocal & set "SEARCH_RESULT=%SEARCH_RESULT%"
+
+exit /b %RC_SUCCESS%
 
 :: Part 11 04_Search.bat
 
@@ -593,6 +623,23 @@ echo     Results Found   : %SEARCH_RESULT_COUNT%
 echo.
 
 exit /b %RC_SUCCESS%
+
+
+
+
+
+::=======================================================================
+:: Search.GetResultCount
+::=======================================================================
+
+:Search_GetResultCount
+
+set "SEARCH_GET_RESULT_COUNT=%SEARCH_RESULT_COUNT%"
+
+exit /b %RC_SUCCESS%
+
+
+
 
 :: Part 12 04_Search.bat
 

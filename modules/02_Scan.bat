@@ -96,7 +96,6 @@ if /I "%~1"=="Scan.ProcessFile"       goto Scan_ProcessFile
 ::-----------------------------------------------------------------------
 
 if /I "%~1"=="Scan.ShouldIgnore"      goto Scan_ShouldIgnore
-if /I "%~1"=="Scan.IsValidExtension"  goto Scan_IsValidExtension
 
 
 ::-----------------------------------------------------------------------
@@ -104,7 +103,7 @@ if /I "%~1"=="Scan.IsValidExtension"  goto Scan_IsValidExtension
 ::-----------------------------------------------------------------------
 
 if /I "%~1"=="Scan.AddFile"           goto Scan_AddFile
-if /I "%~1"=="Scan.GetCount"          goto Scan_GetCount
+if /I "%~1"=="Scan.GetFileCount"      goto Scan_GetFileCount
 if /I "%~1"=="Scan.GetTotalSize"      goto Scan_GetTotalSize
 if /I "%~1"=="Scan.GetDatabase"       goto Scan_GetDatabase
 if /I "%~1"=="Scan.SaveResult"        goto Scan_SaveResult
@@ -153,6 +152,10 @@ exit /b %RC_INVALID_PARAMETER%
 :Scan_Initialize
 
 set "SCAN_ROOT=%PROJECT_PATH%"
+
+if "%PROJECT_PATH%"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
 
 :: Reserved for future file list.
 set "SCAN_LIST="
@@ -205,6 +208,7 @@ set "SCAN_CURRENT_FILE="
 set "SCAN_CURRENT_NAME="
 set "SCAN_CURRENT_EXT="
 set "SCAN_CURRENT_DIR="
+set "SCAN_CURRENT_RELATIVE="
 
 set /A SCAN_CURRENT_SIZE=0
 
@@ -375,26 +379,27 @@ exit /b %RC_SUCCESS%
 
 :Scan_ReadFileInfo
 
-call "%~dp001_Core.bat" Core.RelativePath "%SCAN_CURRENT_PATH%"
-
-set "SCAN_CURRENT_RELATIVE=%RELATIVE_PATH%"
-
 if "%~2"=="" (
     exit /b %RC_INVALID_PARAMETER%
 )
 
 set "SCAN_CURRENT_PATH=%~f2"
 
+call "%~dp001_Core.bat" Core.RelativePath "%SCAN_CURRENT_PATH%"
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+set "SCAN_CURRENT_RELATIVE=%RELATIVE_PATH%"
+
 set "SCAN_CURRENT_FILE=%~nx2"
 
 for %%A in ("%~2") do (
 
     set "SCAN_CURRENT_NAME=%%~nA"
-
     set "SCAN_CURRENT_EXT=%%~xA"
-
     set "SCAN_CURRENT_DIR=%%~dpA"
-
     set "SCAN_CURRENT_SIZE=%%~zA"
 
 )
@@ -434,9 +439,9 @@ if "%~2"=="" (
 
 for /L %%I in (1,1,%IGNORE_COUNT%) do (
 
-    call set "IGNORE_DIR=%%IGNORE_DIR_%%I%%"
+    call set "CURRENT_IGNORE=%%IGNORE_DIR_%%I%%"
 
-    call "%~dp001_Core.bat" Core.StringContains "%~2" "!IGNORE_DIR!"
+    call "%~dp001_Core.bat" Core.StringContains "%~2" "%CURRENT_IGNORE%"
 
     if not errorlevel 1 (
         exit /b %RC_SCAN_FAILED%
@@ -448,44 +453,6 @@ exit /b %RC_SUCCESS%
 
 
 
-::=======================================================================
-:: Scan.IsValidExtension
-::-----------------------------------------------------------------------
-:: Purpose
-::     Verify supported source file extension.
-::
-:: Input
-::     %2 = Full file path
-::
-:: Return
-::     RC_SUCCESS
-::     RC_FILE_NOT_FOUND
-::     RC_INVALID_PARAMETER
-::=======================================================================
-
-:Scan_IsValidExtension
-
-if "%~2"=="" (
-    exit /b %RC_INVALID_PARAMETER%
-)
-
-for %%A in ("%~2") do (
-
-    call "%~dp001_Core.bat" Core.StringEquals "%%~xA" ".c"
-
-    if not errorlevel 1 (
-        exit /b %RC_SUCCESS%
-    )
-
-    call "%~dp001_Core.bat" Core.StringEquals "%%~xA" ".h"
-
-    if not errorlevel 1 (
-        exit /b %RC_SUCCESS%
-    )
-
-)
-
-exit /b %RC_FILE_NOT_FOUND%
 
 :: Part 5 02_Scan.bat
 
@@ -528,7 +495,7 @@ exit /b %RC_SUCCESS%
 
 
 ::=======================================================================
-:: Scan.GetCount
+:: Scan.GetFileCount
 ::-----------------------------------------------------------------------
 :: Purpose
 ::     Get total scanned file count.
@@ -540,7 +507,7 @@ exit /b %RC_SUCCESS%
 ::     RC_SUCCESS
 ::=======================================================================
 
-:Scan_GetCount
+:Scan_GetFileCount
 
 set "SCAN_GET_FILE_COUNT=%SCAN_FILE_COUNT%"
 
@@ -614,7 +581,7 @@ exit /b %RC_SUCCESS%
 ::
 :: Database Format
 ::
-::     FullPath|FileName|BaseName|Extension|FileSize
+::     FullPath|RelativePath|FileName|BaseName|Extension|FileSize
 ::
 :: Example
 ::
@@ -645,7 +612,7 @@ if "%SCAN_DATABASE%"=="" (
 )
 
 >>"%SCAN_DATABASE%" (
-    echo %SCAN_CURRENT_PATH%^|%SCAN_CURRENT_RELATIVE%^|%SCAN_CURRENT_FILE%^|%SCAN_CURRENT_NAME%^|%SCAN_CURRENT_EXT%^|%SCAN_CURRENT_SIZE%
+    echo(%SCAN_CURRENT_PATH%^|%SCAN_CURRENT_RELATIVE%^|%SCAN_CURRENT_FILE%^|%SCAN_CURRENT_NAME%^|%SCAN_CURRENT_EXT%^|%SCAN_CURRENT_SIZE%
 )
 
 exit /b %RC_SUCCESS%

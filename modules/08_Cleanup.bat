@@ -36,7 +36,21 @@ if not defined CLEANUP_MODULE_LOADED (
 :: CLEANUP RUNTIME
 ::=======================================================================
 
-rem Reserved for future runtime variables.
+::-----------------------------------------------------------------------
+:: Cleanup Statistics
+::-----------------------------------------------------------------------
+
+set /A CLEANUP_DATABASE_COUNT=0
+
+set /A CLEANUP_TEMP_FILE_COUNT=0
+
+set /A CLEANUP_LOG_COUNT=0
+
+set "CLEANUP_GET_DATABASES="
+
+set "CLEANUP_GET_TEMP_FILES="
+
+set "CLEANUP_GET_LOGS="
 
 ::=======================================================================
 :: API DISPATCHER
@@ -47,10 +61,17 @@ if "%~1"=="" (
 )
 
 ::-----------------------------------------------------------------------
-:: Cleanup Controller
+:: Controller API
 ::-----------------------------------------------------------------------
 
-if /I "%~1"=="Cleanup.Start" goto Cleanup_Start
+if /I "%~1"=="Cleanup.Start"                goto Cleanup_Start
+if /I "%~1"=="Cleanup.Finalize"             goto Cleanup_Finalize
+
+::-----------------------------------------------------------------------
+:: Runtime API
+::-----------------------------------------------------------------------
+
+if /I "%~1"=="Cleanup.Initialize"           goto Cleanup_Initialize
 
 ::-----------------------------------------------------------------------
 :: Cleanup Services
@@ -59,6 +80,15 @@ if /I "%~1"=="Cleanup.Start" goto Cleanup_Start
 if /I "%~1"=="Cleanup.DeleteDatabase"       goto Cleanup_DeleteDatabase
 if /I "%~1"=="Cleanup.DeleteTemporaryFiles" goto Cleanup_DeleteTemporaryFiles
 if /I "%~1"=="Cleanup.DeleteLogs"           goto Cleanup_DeleteLogs
+
+::-----------------------------------------------------------------------
+:: Query API
+::-----------------------------------------------------------------------
+
+if /I "%~1"=="Cleanup.GetSummary"           goto Cleanup_GetSummary
+if /I "%~1"=="Cleanup.GetDatabaseCount"     goto Cleanup_GetDatabaseCount
+if /I "%~1"=="Cleanup.GetTempCount"         goto Cleanup_GetTempCount
+if /I "%~1"=="Cleanup.GetLogCount"          goto Cleanup_GetLogCount
 
 ::-----------------------------------------------------------------------
 :: Unknown API
@@ -80,6 +110,26 @@ exit /b %RC_INVALID_PARAMETER%
 ::#######################################################################
 :: CLEANUP CONTROLLER API
 ::#######################################################################
+
+::=======================================================================
+:: Cleanup.Initialize
+::-----------------------------------------------------------------------
+:: Purpose
+::     Initialize cleanup runtime.
+::
+:: Responsibilities
+::     • Prepare cleanup session
+::     • Reset cleanup runtime variables
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
+:Cleanup_Initialize
+
+rem Reserved for future runtime initialization.
+
+exit /b %RC_SUCCESS%
 
 ::=======================================================================
 :: Cleanup.Start
@@ -105,6 +155,12 @@ exit /b %RC_INVALID_PARAMETER%
 
 :Cleanup_Start
 
+call "%~f0" Cleanup.Initialize
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
 call "%~f0" Cleanup.DeleteDatabase
 
 if errorlevel 1 (
@@ -122,6 +178,32 @@ call "%~f0" Cleanup.DeleteLogs
 if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
+
+call "%~f0" Cleanup.Finalize
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Cleanup.Finalize
+::-----------------------------------------------------------------------
+:: Purpose
+::     Finalize cleanup workflow.
+::
+:: Responsibilities
+::     • Finalize cleanup session
+::     • Reserved for future cleanup summary
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
+:Cleanup_Finalize
+
+rem Reserved for future cleanup summary.
 
 exit /b %RC_SUCCESS%
 
@@ -156,6 +238,8 @@ if errorlevel 1 (
 if exist "%SCAN_GET_DATABASE%" (
 
     del /F /Q "%SCAN_GET_DATABASE%"
+
+    set /A CLEANUP_DATABASE_COUNT+=1
 
 )
 
@@ -220,7 +304,75 @@ exit /b %RC_SUCCESS%
 
 
 
+:Cleanup_GetSummary
 
+call "%~f0" Cleanup.GetDatabaseCount
+
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~f0" Cleanup.GetTempCount
+
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~f0" Cleanup.GetLogCount
+
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+exit /b %RC_SUCCESS%
+
+
+
+
+
+
+
+
+
+
+
+
+:Cleanup_GetDatabaseCount
+
+set "CLEANUP_GET_DATABASES=%CLEANUP_DATABASE_COUNT%"
+
+exit /b %RC_SUCCESS%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:Cleanup_GetTempCount
+
+set "CLEANUP_GET_TEMP_FILES=%CLEANUP_TEMP_FILE_COUNT%"
+
+exit /b %RC_SUCCESS%
+
+
+
+
+
+
+
+
+
+
+
+
+:Cleanup_GetLogCount
+
+set "CLEANUP_GET_LOGS=%CLEANUP_LOG_COUNT%"
+
+exit /b %RC_SUCCESS%
 
 
 

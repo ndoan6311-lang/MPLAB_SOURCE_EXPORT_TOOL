@@ -98,8 +98,11 @@ if /I "%~1"=="Statistics.AddComment"     goto Statistics_AddComment
 :: Query API
 ::-----------------------------------------------------------------------
 
-if /I "%~1"=="Statistics.GetSummary"     goto Statistics_GetSummary
-
+if /I "%~1"=="Statistics.GetSummary"        goto Statistics_GetSummary
+if /I "%~1"=="Statistics.GetFileCount"      goto Statistics_GetFileCount
+if /I "%~1"=="Statistics.GetLineCount"      goto Statistics_GetLineCount
+if /I "%~1"=="Statistics.GetCharacterCount" goto Statistics_GetCharacterCount
+if /I "%~1"=="Statistics.GetCommentCount"   goto Statistics_GetCommentCount
 
 ::-----------------------------------------------------------------------
 :: Unknown API
@@ -334,10 +337,92 @@ exit /b %RC_SUCCESS%
 
 :Statistics_GetSummary
 
-set "STAT_GET_FILES=%STAT_FILE_COUNT%"
-set "STAT_GET_LINES=%STAT_LINE_COUNT%"
-set "STAT_GET_CHARACTERS=%STAT_CHARACTER_COUNT%"
-set "STAT_GET_COMMENTS=%STAT_COMMENT_COUNT%"
+call "%~f0" Statistics.GetFileCount
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~f0" Statistics.GetLineCount
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~f0" Statistics.GetCharacterCount
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~f0" Statistics.GetCommentCount
+if errorlevel 1 exit /b %ERRORLEVEL%
 
 exit /b %RC_SUCCESS%
 
+::=======================================================================
+:: Statistics.GetFileCount
+::-----------------------------------------------------------------------
+:: Purpose
+::     Get exported file count.
+::
+:: Output
+::     STAT_GET_FILES
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
+:Statistics_GetFileCount
+
+set "STAT_GET_FILES=%STAT_FILE_COUNT%"
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Statistics.GetLineCount
+::-----------------------------------------------------------------------
+:: Purpose
+::     Get exported line count.
+::
+:: Output
+::     STAT_GET_LINES
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
+:Statistics_GetLineCount
+
+set "STAT_GET_LINES=%STAT_LINE_COUNT%"
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Statistics.GetCharacterCount
+::-----------------------------------------------------------------------
+:: Purpose
+::     Get exported character count.
+::
+:: Output
+::     STAT_GET_CHARACTERS
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
+:Statistics_GetCharacterCount
+
+set "STAT_GET_CHARACTERS=%STAT_CHARACTER_COUNT%"
+
+exit /b %RC_SUCCESS%
+
+::=======================================================================
+:: Statistics.GetCommentCount
+::-----------------------------------------------------------------------
+:: Purpose
+::     Get exported comment line count.
+::
+:: Output
+::     STAT_GET_COMMENTS
+::
+:: Return
+::     RC_SUCCESS
+::=======================================================================
+
+:Statistics_GetCommentCount
+
+set "STAT_GET_COMMENTS=%STAT_COMMENT_COUNT%"
+
+exit /b %RC_SUCCESS%

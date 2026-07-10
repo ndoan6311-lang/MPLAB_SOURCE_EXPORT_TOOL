@@ -237,7 +237,11 @@ set "MENU_SELECTED_OPTION="
 
 echo.
 
-set /P "MENU_SELECTED_OPTION=Select an option : "
+set /P "MENU_SELECTED_OPTION=Select an option [%MENU_DEFAULT%] : "
+
+if "%MENU_SELECTED_OPTION%"=="" (
+    set "MENU_SELECTED_OPTION=%MENU_DEFAULT%"
+)
 
 echo.
 
@@ -269,6 +273,12 @@ exit /b %RC_SUCCESS%
 ::=======================================================================
 
 :Menu_Validate
+
+echo(%MENU_SELECTED_OPTION%|findstr /R "^[0-9][0-9]*$" >nul
+
+if errorlevel 1 (
+    exit /b %RC_INVALID_PARAMETER%
+)
 
 set /A MENU_OPTION=%MENU_SELECTED_OPTION% 2>nul
 
@@ -315,50 +325,8 @@ exit /b %RC_SUCCESS%
 
 if "%MENU_SELECTED_OPTION%"=="1" (
 
-    call "%~dp006_Statistics.bat" Statistics.Start
-
-    if errorlevel 1 exit /b %ERRORLEVEL%
-
-    call "%~dp001_Core.bat" Core.PrintCenter "SCANNING PROJECT"
-
-    call "%~dp002_Scan.bat" Scan.Start
-
-    if errorlevel 1 exit /b %ERRORLEVEL%
-
-    call "%~f0" Menu.ShowScanSummary
-
-    if errorlevel 1 exit /b %ERRORLEVEL%
-
-    call "%~dp002_Scan.bat" Scan.GetDatabase
-
-    if errorlevel 1 exit /b %ERRORLEVEL%
-
-    call "%~dp001_Core.bat" Core.PrintCenter "EXPORT SOURCE"
-
-    call "%~dp005_Export.bat" Export.Start "%SCAN_GET_DATABASE%"
-
-    if errorlevel 1 exit /b %ERRORLEVEL%
-
-    call "%~f0" Menu.ShowExportSummary
-
-    if errorlevel 1 exit /b %ERRORLEVEL%
-
-    call "%~f0" Menu.ShowStatisticsSummary
-
-    if errorlevel 1 exit /b %ERRORLEVEL%
-
-    call "%~f0" Menu.ShowFinished
-
-    if errorlevel 1 (
-        exit /b %ERRORLEVEL%
-    )
-
-    exit /b %RC_SUCCESS%
-)
-
-if "%MENU_SELECTED_OPTION%"=="2" (
-
-    exit /b %RC_USER_CANCEL%
+    call "%~dp099_Main.bat" Main.RunExportWorkflow
+    exit /b %ERRORLEVEL%
 
 )
 
@@ -373,7 +341,7 @@ exit /b %RC_INVALID_PARAMETER%
 
 call "%~dp001_Core.bat" Core.PrintCenter "SCAN SUMMARY"
 
-call "%~dp002_Scan.bat" Scan.GetCount
+call "%~dp002_Scan.bat" Scan.GetFileCount
 
 if errorlevel 1 (
     exit /b %ERRORLEVEL%
@@ -470,12 +438,15 @@ exit /b %RC_SUCCESS%
 
 call "%~dp001_Core.bat" Core.PrintCenter "PROGRAM FINISHED"
 
-if errorlevel 1 (
-    exit /b %ERRORLEVEL%
-)
+if errorlevel 1 exit /b %ERRORLEVEL%
 
-echo     Export completed successfully.
+echo     Operation completed successfully.
+
 echo.
+
+call "%~dp001_Core.bat" Core.Pause
+
+if errorlevel 1 exit /b %ERRORLEVEL%
 
 exit /b %RC_SUCCESS%
 

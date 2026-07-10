@@ -69,9 +69,11 @@ set "IGNORE_DIR_6=\objects\"
 :: USER INTERFACE CONFIGURATION
 ::=======================================================================
 
-set /A BAR_WIDTH=60
+set "LINE="
 
-set "LINE==============================================================="
+for /L %%I in (1,1,%BAR_WIDTH%) do (
+    set "LINE=!LINE!="
+)
 
 ::=======================================================================
 :: RETURN CODES
@@ -415,11 +417,19 @@ exit /b %RC_SUCCESS%
 
 :Core_RelativePath
 
-if "%~2"=="" exit /b %RC_INVALID_PARAMETER%
+if "%~2"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
 
-set "RELATIVE_PATH=%~2"
+setlocal EnableDelayedExpansion
 
-set "RELATIVE_PATH=!RELATIVE_PATH:%PROJECT_PATH%\=!"
+set "TEMP_PATH=%~2"
+
+set "TEMP_PATH=!TEMP_PATH:%PROJECT_PATH%\=!"
+
+endlocal & (
+    set "RELATIVE_PATH=%TEMP_PATH%"
+)
 
 exit /b %RC_SUCCESS%
 
@@ -764,3 +774,32 @@ if /I "%~2"=="%~3" (
 )
 
 exit /b %RC_NO_MATCH%
+
+
+
+
+
+:Core_StringTrim
+
+if "%~2"=="" (
+    exit /b %RC_INVALID_PARAMETER%
+)
+
+set "STRING_RESULT=%~2"
+
+:: Trim bên trái
+for /f "tokens=* delims= " %%A in ("%STRING_RESULT%") do (
+    set "STRING_RESULT=%%A"
+)
+
+:: Trim bên phải
+:TrimRight
+
+if not "%STRING_RESULT%"=="" (
+    if "%STRING_RESULT:~-1%"==" " (
+        set "STRING_RESULT=%STRING_RESULT:~0,-1%"
+        goto TrimRight
+    )
+)
+
+exit /b %RC_SUCCESS%

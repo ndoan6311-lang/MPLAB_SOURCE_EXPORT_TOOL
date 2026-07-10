@@ -28,11 +28,11 @@
 
 call "%~dp090_Bootstrap.bat"
 
-echo.
-echo Bootstrap Return = %ERRORLEVEL%
-echo.
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
 
-pause
+
 
 
 ::=======================================================================
@@ -41,7 +41,9 @@ pause
 
 call :Main
 
-exit /b %ERRORLEVEL%
+set "EXIT_CODE=%ERRORLEVEL%"
+
+exit /b %EXIT_CODE%
 
 
 
@@ -164,6 +166,9 @@ exit /b %RC_SUCCESS%
 
 set "EXIT_CODE=%ERRORLEVEL%"
 
+rem Dọn dẹp tài nguyên
+call :Shutdown
+
 call "%~dp001_Core.bat" Core.Error
 
 echo.
@@ -176,7 +181,40 @@ echo Exit Code : %EXIT_CODE%
 echo.
 
 call "%~dp001_Core.bat" Core.PrintLine
-
 call "%~dp001_Core.bat" Core.Normal
 
 exit /b %EXIT_CODE%
+
+
+
+
+
+
+
+:RunExportWorkflow
+
+call "%~dp006_Statistics.bat" Statistics.Start
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp002_Scan.bat" Scan.Start
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp003_Menu.bat" Menu.ShowScanSummary
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp002_Scan.bat" Scan.GetDatabase
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp005_Export.bat" Export.Start "%SCAN_GET_DATABASE%"
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp003_Menu.bat" Menu.ShowExportSummary
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp003_Menu.bat" Menu.ShowStatisticsSummary
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp003_Menu.bat" Menu.ShowFinished
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+exit /b %RC_SUCCESS%
