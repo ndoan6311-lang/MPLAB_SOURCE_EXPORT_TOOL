@@ -56,7 +56,7 @@ set "SCAN_GET_DATABASE="
 :: Scan Database
 ::-----------------------------------------------------------------------
 
-set "SCAN_DATABASE=%TEMP%\mplab_scan_database.tmp"
+set "SCAN_DATABASE=%TEMP%\mplab_scan_%RANDOM%%RANDOM%.tmp"
 
 ::=======================================================================
 :: API DISPATCHER
@@ -151,10 +151,16 @@ exit /b %RC_INVALID_PARAMETER%
 
 :Scan_Initialize
 
-set "SCAN_ROOT=%PROJECT_PATH%"
+call "%~dp009_Project.bat" Project.GetSourceRoot
 
-if "%PROJECT_PATH%"=="" (
-    exit /b %RC_INVALID_PARAMETER%
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+set "SCAN_ROOT=%PROJECT_GET_SOURCE_ROOT%"
+
+if "%SCAN_ROOT%"=="" (
+    exit /b %RC_PROJECT_NOT_FOUND%
 )
 
 :: Reserved for future file list.
@@ -290,7 +296,7 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-for %%E in (*.c *.h) do (
+for %%E in (%SCAN_PATTERN%) do (
 
     for /R "%~2" %%F in (%%E) do (
 

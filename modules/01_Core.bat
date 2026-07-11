@@ -48,6 +48,7 @@ set "APP_COPYRIGHT=(C) 2026 Tan Doan"
 
 set "APP_OUTPUT=All_Selected_Source.txt"
 
+set /A BAR_WIDTH=70
 
 ::=======================================================================
 :: SCAN CONFIGURATION
@@ -213,13 +214,21 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-::--------------------------------------------------
-:: Session Variables
-::--------------------------------------------------
-
 set "PROJECT_NAME="
-set "PROJECT_PATH=%CD%"
-set "OUTPUT_FILE=%APP_OUTPUT%"
+
+call "%~dp009_Project.bat" Project.GetPath
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+call "%~dp009_Project.bat" Project.GetOutputFile
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+set "OUTPUT_FILE=%PROJECT_GET_OUTPUT_FILE%"
 
 set "START_TIME=%TIME%"
 set "END_TIME="
@@ -228,8 +237,6 @@ set "CURRENT_TIME="
 set "ELAPSED_TIME="
 
 set "TEMP_FILE=%TEMP%\mplab_export.tmp"
-
-
 
 exit /b %RC_SUCCESS%
 
@@ -371,28 +378,39 @@ exit /b %RC_SUCCESS%
 ::
 :: Output
 ::     PROJECT_NAME
-::     PROJECT_PATH
+::     PROJECT_GET_PATH
 ::=======================================================================
 
 :Core_DetectProject
 
 set "PROJECT_NAME="
-set "PROJECT_PATH=%CD%"
+call "%~dp009_Project.bat" Project.GetPath
 
-for %%D in ("%CD%") do (
-
-    if /I "%%~xD"==".X" (
-        set "PROJECT_NAME=%%~nxD"
-    )
-
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
 )
 
-if not defined PROJECT_NAME (
+rem -------------------------------------------------
+rem Kiểm tra đây có phải MPLAB Project không
+rem -------------------------------------------------
 
-    for %%D in ("%CD%") do (
-        set "PROJECT_NAME=%%~nxD"
-    )
+if exist "%PROJECT_GET_PATH%\nbproject\" goto FoundProject
 
+for %%D in ("%PROJECT_GET_PATH%") do (
+    if /I "%%~xD"==".X" goto FoundProject
+)
+
+exit /b %RC_PROJECT_NOT_FOUND%
+
+
+
+
+
+
+:FoundProject
+
+for %%D in ("%PROJECT_GET_PATH%") do (
+    set "PROJECT_NAME=%%~nxD"
 )
 
 exit /b %RC_SUCCESS%
@@ -417,15 +435,17 @@ exit /b %RC_SUCCESS%
 
 :Core_RelativePath
 
-if "%~2"=="" (
-    exit /b %RC_INVALID_PARAMETER%
+call "%~dp009_Project.bat" Project.GetPath
+
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
 )
 
 setlocal EnableDelayedExpansion
 
 set "TEMP_PATH=%~2"
 
-set "TEMP_PATH=!TEMP_PATH:%PROJECT_PATH%\=!"
+set "TEMP_PATH=!TEMP_PATH:%PROJECT_GET_PATH%\=!"
 
 endlocal & (
     set "RELATIVE_PATH=%TEMP_PATH%"

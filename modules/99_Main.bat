@@ -21,10 +21,23 @@
 ::
 ::#######################################################################
 
+::=======================================================================
+:: API DISPATCHER
+::=======================================================================
+
+if "%~1"=="" goto Startup
+
+if /I "%~1"=="Main.RunExportWorkflow" goto RunExportWorkflow
+if /I "%~1"=="Main.Initialize" goto Initialize
+if /I "%~1"=="Main.Shutdown" goto Shutdown
+
+exit /b %RC_INVALID_PARAMETER%
 
 ::=======================================================================
 :: LOAD FRAMEWORK
 ::=======================================================================
+
+:Startup
 
 call "%~dp090_Bootstrap.bat"
 
@@ -32,19 +45,11 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-
-
-
-::=======================================================================
-:: APPLICATION ENTRY
-::=======================================================================
-
 call :Main
 
 set "EXIT_CODE=%ERRORLEVEL%"
 
 exit /b %EXIT_CODE%
-
 
 
 ::=======================================================================
@@ -77,6 +82,12 @@ exit /b %RC_SUCCESS%
 ::=======================================================================
 
 :Initialize
+
+call "%~dp009_Project.bat" Project.Select
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call "%~dp009_Project.bat" Project.Verify
+if errorlevel 1 exit /b %ERRORLEVEL%
 
 call "%~dp001_Core.bat" Core.Initialize
 if errorlevel 1 exit /b %ERRORLEVEL%

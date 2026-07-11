@@ -35,7 +35,7 @@ if not defined EXPORT_MODULE_LOADED (
 :: EXPORT CONFIGURATION
 ::=======================================================================
 
-set "EXPORT_OUTPUT_FILE=%APP_OUTPUT%"
+set "EXPORT_OUTPUT_FILE=%OUTPUT_FILE%"
 
 set "EXPORT_APPEND_MODE=0"  rem TODO
 set "EXPORT_WRITE_SEPARATOR=1"

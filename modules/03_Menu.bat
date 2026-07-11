@@ -330,6 +330,10 @@ if "%MENU_SELECTED_OPTION%"=="1" (
 
 )
 
+if "%MENU_SELECTED_OPTION%"=="2" (
+    exit /b %RC_USER_CANCEL%
+)
+
 exit /b %RC_INVALID_PARAMETER%
 
 

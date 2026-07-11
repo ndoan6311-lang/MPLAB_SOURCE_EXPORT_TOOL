@@ -39,6 +39,9 @@ if defined BOOTSTRAP_MODULE_LOADED (
 call :Bootstrap_LoadModule "01_Core.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
+call :Bootstrap_LoadModule "09_Project.bat"
+if errorlevel 1 exit /b %ERRORLEVEL%
+
 call :Bootstrap_LoadModule "02_Scan.bat"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
@@ -98,8 +101,6 @@ echo Loading %~1 ...
 
 call "%~dp0%~1"
 
-echo Return=%ERRORLEVEL%
-
 if errorlevel 1 (
     set "BOOTSTRAP_ERROR_MODULE=%~1"
     call :BootstrapError
@@ -114,7 +115,8 @@ exit /b 0
 
 :Bootstrap_VerifyModules
 
-if not defined CORE_MODULE_LOADED goto MissingCore
+if not defined CORE_MODULE_LOADED       goto MissingCore
+if not defined PROJECT_MODULE_LOADED    goto MissingProject
 
 ::-----------------------------------------------------------------------
 :: Reserved For Future Verification
@@ -127,6 +129,7 @@ if not defined EXPORT_MODULE_LOADED     goto MissingExport
 if not defined STATISTICS_MODULE_LOADED goto MissingStatistics
 if not defined PROGRESS_MODULE_LOADED   goto MissingProgress
 if not defined CLEANUP_MODULE_LOADED    goto MissingCleanup
+
 
 ::=======================================================================
 :: BOOTSTRAP COMPLETE
@@ -190,6 +193,10 @@ exit /b 1
 set "BOOTSTRAP_ERROR_MODULE=01_Core.bat"
 goto BootstrapError
 
+:MissingProject
+set "BOOTSTRAP_ERROR_MODULE=09_Project.bat"
+goto BootstrapError
+
 :MissingScan
 set "BOOTSTRAP_ERROR_MODULE=02_Scan.bat"
 goto BootstrapError
@@ -217,3 +224,4 @@ goto BootstrapError
 :MissingCleanup
 set "BOOTSTRAP_ERROR_MODULE=08_Cleanup.bat"
 goto BootstrapError
+
